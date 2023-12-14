@@ -14,6 +14,8 @@ from .amp import autocast
 from .base_loop import BaseLoop
 from .utils import calc_dynamic_intervals
 
+# for numpy usage
+import numpy as np
 
 @LOOPS.register_module()
 class EpochBasedTrainLoop(BaseLoop):
@@ -91,25 +93,43 @@ class EpochBasedTrainLoop(BaseLoop):
     def run(self) -> torch.nn.Module:
         """Launch training."""
         self.runner.call_hook('before_train')
+        
+        # initialize idx array which specifies which classes should 
+        # be included in the training
+        threshold = 0.3
+        cls = [i for i in range(self.runner.model.head.fc.out_features)]
 
         while self._epoch < self._max_epochs and not self.stop_training:
-            self.run_epoch()
+            self.run_epoch(cls)
 
             self._decide_current_val_interval()
             if (self.runner.val_loop is not None
                     and self._epoch >= self.val_begin
                     and self._epoch % self.val_interval == 0):
-                self.runner.val_loop.run()
+
+                # get the metrics
+                x = self.runner.val_loop.run()
+        
+            # based on returned metrics and on mode see which classes need 
+            # to be trained on in the next round 
+            precisions = np.array(x['single-label/precision_classwise'])
+            recalls = np.array(x['single-label/recall_classwise'])
+            f1_scores = np.where((precisions + recalls) == 0, 0, 2 * (precisions * recalls) / (precisions + recalls + 1e-7))
+            cls = np.where(f1_scores < threshold)[0]
+            print(cls)
 
         self.runner.call_hook('after_train')
         return self.runner.model
 
-    def run_epoch(self) -> None:
+    def run_epoch(self, cls) -> None:
         """Iterate one epoch."""
         self.runner.call_hook('before_train_epoch')
         self.runner.model.train()
+
         for idx, data_batch in enumerate(self.dataloader):
-            self.run_iter(idx, data_batch)
+            # only run iterations for classes that should be included 
+            if data_batch['data_samples'][0].gt_label.item() in cls:
+                self.run_iter(idx, data_batch)
 
         self.runner.call_hook('after_train_epoch')
         self._epoch += 1
@@ -381,6 +401,7 @@ class ValLoop(BaseLoop):
         # outputs should be sequence of BaseDataElement
         with autocast(enabled=self.fp16):
             outputs = self.runner.model.val_step(data_batch)
+
         self.evaluator.process(data_samples=outputs, data_batch=data_batch)
         self.runner.call_hook(
             'after_val_iter',

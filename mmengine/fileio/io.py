@@ -841,6 +841,7 @@ def load(file,
                 'same time.')
 
     handler = file_handlers[file_format]
+    print(f"{file_format} ----------------------------------------------------------- load mehtod in io.py")
     if is_str(file):
         if file_client_args is not None:
             file_client = FileClient.infer_client(file_client_args, file)
