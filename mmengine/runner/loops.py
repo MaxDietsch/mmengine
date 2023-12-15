@@ -14,8 +14,9 @@ from .amp import autocast
 from .base_loop import BaseLoop
 from .utils import calc_dynamic_intervals
 
-# for numpy usage
+# for usage of self made sampler
 import numpy as np
+from mmengine.dataset import DynamicSampler 
 
 @LOOPS.register_module()
 class EpochBasedTrainLoop(BaseLoop):
@@ -108,16 +109,13 @@ class EpochBasedTrainLoop(BaseLoop):
                     and self._epoch % self.val_interval == 0):
 
                 # get the metrics
-                x = self.runner.val_loop.run()
+                mtrcs = self.runner.val_loop.run()
+            
+            # update sampler
+            if isinstance(self.dataloader.sampler, DynamicSampler):
+                f1_scores = np.array(mtrcs['single-label/f1-score_classwise']) / 100
+                self.dataloader.sampler.update_sample_size(f1_scores)
         
-            # based on returned metrics and on mode see which classes need 
-            # to be trained on in the next round 
-            # precisions = np.array(x['single-label/precision_classwise'])
-            # recalls = np.array(x['single-label/recall_classwise'])
-            # f1_scores = np.where((precisions + recalls) == 0, 0, 2 * (precisions * recalls) / (precisions + recalls + 1e-7))
-            # cls = np.where(f1_scores < threshold)[0]
-            # print(cls)
-
         self.runner.call_hook('after_train')
         return self.runner.model
 
@@ -130,7 +128,7 @@ class EpochBasedTrainLoop(BaseLoop):
             # only run iterations for classes that should be included 
             # if data_batch['data_samples'][0].gt_label.item() in cls:
                 # self.run_iter(idx, data_batch)
-            print(data_batch)
+            #print(data_batch)
             self.run_iter(idx, data_batch)
 
         self.runner.call_hook('after_train_epoch')
