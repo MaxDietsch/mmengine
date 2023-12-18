@@ -150,8 +150,8 @@ class DynamicSampler(Sampler):
         for item in data_list:
             self.label_counts[item['gt_label']] += 1
         self.factors = np.round(self.sample_size / self.label_counts, 2)
-        print(self.factors) 
-        # check if this is necessary
+
+        # check if this is necessary, i think not, but normally it has to be done
         self.num_samples = math.ceil((np.sum(self.sample_size) - self.rank) / self.world_size)
         self.total_size = self.num_samples * self.world_size
 
@@ -283,7 +283,7 @@ class ROSSampler(Sampler):
             np.random.shuffle(indices)
         
         # update num_samples and total_size for correct printed output of train process
-        self.num_samples = math.ceil((len(self.indices) - self.rank) / self.world_size)
+        self.num_samples = math.ceil((len(indices) - self.rank) / self.world_size)
         self.total_size = self.num_samples * self.world_size
 
         # self.round_up would not be useful, as it would change the sample size
@@ -380,7 +380,7 @@ class RUSSampler(Sampler):
             np.random.shuffle(indices)
         
         # update num_samples and total_size for correct printed output of train process
-        self.num_samples = math.ceil((len(self.indices) - self.rank) / self.world_size)
+        self.num_samples = math.ceil((len(indices) - self.rank) / self.world_size)
         self.total_size = self.num_samples * self.world_size
 
         # self.round_up would not be useful, as it would change the sample size
