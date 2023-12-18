@@ -335,8 +335,8 @@ class RUSSampler(Sampler):
 
         # get the initial count of each class
         self.num_classes = num_classes
-        self.ros_pct = ros_pct
-        self.rus_maj_pct = rus_maj_pct
+        self.rus_pct = rus_pct
+        self.ros_min_pct = ros_min_pct
         self.label_counts = np.full(self.num_classes, 0)
         data_list = self.dataset.load_data_list()
         self.labels = [item['gt_label'] for item in data_list]
@@ -344,10 +344,10 @@ class RUSSampler(Sampler):
             self.label_counts[item['gt_label']] += 1
 
         # calculate how many samples need to be duplicated for each class
-        self.factors = np.round(min(self.label_counts) * self.rus_pct * self.rus_min_pct / self.label_counts, 2)
+        self.factors = np.round(min(self.label_counts) * self.rus_pct * self.ros_min_pct / self.label_counts, 2)
         
         # correctly set the number of samples of the minority class
-        self.factors[np.argmin(self.label_counts)] = 1 * self.rus_maj_pct
+        self.factors[np.argmin(self.label_counts)] = 1 * self.ros_min_pct
 
         if self.round_up:
             self.num_samples = math.ceil(len(self.dataset) / world_size)
