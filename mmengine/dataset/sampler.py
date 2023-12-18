@@ -134,20 +134,21 @@ class DynamicSampler(Sampler):
         # get the label of each element in the dataset
         data_list = self.dataset.load_data_list()
         self.labels = [item['gt_label'] for item in data_list]
-        
+
         # initialize sample_size like in the paper
         self.num_classes = num_classes
         self.average_sample_size = len(self.labels) // self.num_classes
         self.sample_size = np.full(self.num_classes, self.average_sample_size)
+        self.label_indices = [[] for _ in range(0, self.num_classes)]
+        for idx, label in enumerate(self.labels):
+            self.label_indices[label].append(idx)
 
         # calculate factors like in ROSSampler to be able to do ROS
         self.label_counts = np.full(self.num_classes, 0)
-        data_list = self.dataset.load_data_list()
-        self.labels = [item['gt_label'] for item in data_list]
         for item in data_list:
             self.label_counts[item['gt_label']] += 1
         self.factors = np.round(self.sample_size / self.label_counts, 2)
- 
+        print(self.factors) 
         # check if this is necessary
         self.num_samples = math.ceil((np.sum(self.sample_size) - self.rank) / self.world_size)
         self.total_size = self.num_samples * self.world_size
@@ -157,27 +158,26 @@ class DynamicSampler(Sampler):
 
         # deterministically shuffle based on epoch and seed
         # maybe do use self.labels but do it locally 
-        if self.shuffle: 
-            random.seed(self.seed + self.epoch)
-            random.shuffle(self.labels)
+        #if self.shuffle: 
+        #    random.seed(self.seed + self.epoch)
+        #    random.shuffle(self.labels)
 
         # get indices of elements which should be included in training 
         counts = [0] * self.num_classes
         indices = []
         if self.enable_ROS:
-            for idx, label in enumerate(self.labels):
-                prob = self.factors[label] - int(self.factors[label])
-                indices += [idx] * int((np.ceil(self.factors[label]) if np.random.rand() > prob else np.floor(self.factors[label]))) 
-                counts[label] += 1
+            for label in range (0, self.num_classes):
+                indices.append(random.choice(self.label_indices[label]) for _ in range (int(self.sample_size[label]))
         else: 
             for idx, label in enumerate(self.labels):
                 if counts[label] <= self.sample_size[label]:
                     indices.append(idx)
                     counts[label] += 1
         print(f"current distribution of samples from the dataset is : {counts}")
-        
+        print(self.sample_size)
+        print(len(indices))
         # update num_samples and total_size for correct printed output of train process
-        self.num_samples = math.ceil((len(self.indices) - self.rank) / self.world_size)
+        self.num_samples = math.ceil((np.sum(counts) - self.rank) / self.world_size)
         self.total_size = self.num_samples * self.world_size
 
         # self.round_up would not be useful, as it would change the sample size
