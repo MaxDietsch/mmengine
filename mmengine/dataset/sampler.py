@@ -163,7 +163,7 @@ class DynamicSampler(Sampler):
                 #indices.append(random.choice(self.label_indices[label]) for _ in range (int(self.sample_size[label])))
         else:
             for label in range(0, self.num_classes):
-                random_elements = random.sample(self.label_indices[label], self.sample_size[label])
+                random_elements = random.sample(self.label_indices[label], max(self.sample_size[label], len(self.label_indices[label])))
                 indices.extend(random_elements)
             #for idx, label in enumerate(self.labels):
             #   if counts[label] <= self.sample_size[label]:
