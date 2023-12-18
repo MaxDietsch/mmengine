@@ -158,12 +158,6 @@ class DynamicSampler(Sampler):
     def __iter__(self) -> Iterator[int]:
         """Iterate the indices."""
 
-        # deterministically shuffle based on epoch and seed
-        # maybe do use self.labels but do it locally 
-        #if self.shuffle: 
-        #    random.seed(self.seed + self.epoch)
-        #    random.shuffle(self.labels)
-
         # get indices of elements which should be included in training 
         counts = [0] * self.num_classes
         indices = []
@@ -179,10 +173,15 @@ class DynamicSampler(Sampler):
                     indices.append(idx)
                     counts[label] += 1
         print(f"current distribution of samples from the dataset is : {counts}")
-        print(self.sample_size)
-        print(len(indices))
+
+        # deterministically shuffle based on epoch and seed
+        if self.shuffle:
+            indices = np.array(indices)
+            np.random.seed(self.seed + self.epoch)
+            np.random.shuffle(indices)
+        
         # update num_samples and total_size for correct printed output of train process
-        self.num_samples = math.ceil((np.sum(counts) - self.rank) / self.world_size)
+        self.num_samples = math.ceil((len(indices) - self.rank) / self.world_size)
         self.total_size = self.num_samples * self.world_size
 
         # self.round_up would not be useful, as it would change the sample size
@@ -209,9 +208,8 @@ class DynamicSampler(Sampler):
     
     # dynamically set the class sizes based on f1-scores 
     def update_sample_size(self, f1_scores: List[float]) -> None:
-        self.factors = np.round(self.sample_size / self.label_counts, 2)
         self.sample_size = (1 - f1_scores) / (np.sum(1- f1_scores)) * self.average_sample_size
-
+        self.factors = np.round(self.sample_size / self.label_counts, 2)
 
 # like above but relative over-sampling (ros)
 @DATA_SAMPLERS.register_module()
