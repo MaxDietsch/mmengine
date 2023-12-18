@@ -365,9 +365,9 @@ class RUSSampler(Sampler):
         counts = [0] * self.num_classes
         for idx, label in enumerate(self.labels):
             prob = self.factors[label] - int(self.factors[label])
-            print(label, prob)
             replications =  int((np.ceil(self.factors[label]) if np.random.rand() > prob else np.floor(self.factors[label]))) 
             indices += [idx] * replications
+            print(label, replications)
             counts[label] += replications
         print(f"current distribution of samples from the dataset is : {counts}")
 
