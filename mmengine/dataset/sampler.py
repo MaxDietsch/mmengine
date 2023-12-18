@@ -145,12 +145,6 @@ class DynamicSampler(Sampler):
         for idx, label in enumerate(self.labels):
             self.label_indices[label].append(idx)
 
-        # calculate factors like in ROSSampler to be able to do ROS
-        self.label_counts = np.full(self.num_classes, 0)
-        for item in data_list:
-            self.label_counts[item['gt_label']] += 1
-        self.factors = np.round(self.sample_size / self.label_counts, 2)
-
         # check if this is necessary, i think not, but normally it has to be done
         self.num_samples = math.ceil((np.sum(self.sample_size) - self.rank) / self.world_size)
         self.total_size = self.num_samples * self.world_size
@@ -167,11 +161,14 @@ class DynamicSampler(Sampler):
                     indices.append(random.choice(self.label_indices[label]))
                     counts[label] += 1
                 #indices.append(random.choice(self.label_indices[label]) for _ in range (int(self.sample_size[label])))
-        else: 
-            for idx, label in enumerate(self.labels):
-                if counts[label] <= self.sample_size[label]:
-                    indices.append(idx)
-                    counts[label] += 1
+        else:
+            for label in range(0, self.num_classes):
+                random_elements = random.sample(my_array, self.sample_size[label])
+                indices.extend(random_elements)
+            #for idx, label in enumerate(self.labels):
+            #   if counts[label] <= self.sample_size[label]:
+            #      indices.append(idx)
+            #     counts[label] += 1
         print(f"current distribution of samples from the dataset is : {counts}")
 
         # deterministically shuffle based on epoch and seed
@@ -209,7 +206,6 @@ class DynamicSampler(Sampler):
     # dynamically set the class sizes based on f1-scores 
     def update_sample_size(self, f1_scores: List[float]) -> None:
         self.sample_size = (1 - f1_scores) / (np.sum(1- f1_scores)) * self.average_sample_size
-        self.factors = np.round(self.sample_size / self.label_counts, 2)
 
 # like above but relative over-sampling (ros)
 @DATA_SAMPLERS.register_module()
