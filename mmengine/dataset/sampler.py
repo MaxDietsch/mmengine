@@ -170,7 +170,7 @@ class DynamicSampler(Sampler):
         if self.enable_ROS:
             for label in range (0, self.num_classes):
                 for _ in range(int(self.sample_size[label])):
-                    indices.append(random.choice(label_indices[label]))
+                    indices.append(random.choice(self.label_indices[label]))
                     counts[label] += 1
                 #indices.append(random.choice(self.label_indices[label]) for _ in range (int(self.sample_size[label])))
         else: 
