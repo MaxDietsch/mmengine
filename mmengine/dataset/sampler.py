@@ -268,9 +268,13 @@ class ROSSampler(Sampler):
 
         # get indices of elements which should be included in training
         indices = []
+        counts = [0] * self.num_classes
         for idx, label in enumerate(self.labels):
             prob = self.factors[label] - int(self.factors[label])
-            indices += [idx] * int((np.ceil(self.factors[label]) if np.random.rand() > prob else np.floor(self.factors[label]))) 
+            replications =  int((np.ceil(self.factors[label]) if np.random.rand() > prob else np.floor(self.factors[label]))) 
+            indices += [idx] * replications
+            counts[label] += replications
+        print(f"current distribution of samples from the dataset is : {counts}")
 
         # deterministically shuffle based on epoch and seed
         if self.shuffle:
@@ -361,9 +365,13 @@ class RUSSampler(Sampler):
 
         # get indices of elements which should be included in training
         indices = []
+        counts = [0] * self.num_classes
         for idx, label in enumerate(self.labels):
             prob = self.factors[label] - int(self.factors[label])
-            indices += [idx] * int((np.ceil(self.factors[label]) if np.random.rand() > prob else np.floor(self.factors[label]))) 
+            replications =  int((np.ceil(self.factors[label]) if np.random.rand() > prob else np.floor(self.factors[label]))) 
+            indices += [idx] * replications
+            counts[label] += replications
+        print(f"current distribution of samples from the dataset is : {counts}")
 
         # deterministically shuffle based on epoch and seed
         if self.shuffle:
