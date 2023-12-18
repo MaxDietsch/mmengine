@@ -139,6 +139,8 @@ class DynamicSampler(Sampler):
         self.num_classes = num_classes
         self.average_sample_size = len(self.labels) // self.num_classes
         self.sample_size = np.full(self.num_classes, self.average_sample_size)
+
+        # get indices of specific labels
         self.label_indices = [[] for _ in range(0, self.num_classes)]
         for idx, label in enumerate(self.labels):
             self.label_indices[label].append(idx)
@@ -167,7 +169,7 @@ class DynamicSampler(Sampler):
         indices = []
         if self.enable_ROS:
             for label in range (0, self.num_classes):
-                indices.append(random.choice(self.label_indices[label]) for _ in range (int(self.sample_size[label]))
+                indices.append(random.choice(self.label_indices[label]) for _ in range (int(self.sample_size[label])))
         else: 
             for idx, label in enumerate(self.labels):
                 if counts[label] <= self.sample_size[label]:
