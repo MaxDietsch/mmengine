@@ -563,11 +563,20 @@ class DOSTrainLoop(BaseLoop):
         self.runner.call_hook('before_train_epoch')
         while self._iter < self._max_iters and not self.stop_training:
             
-            v = []
+            v = [[] * 4]
             for i in range(self.dataloader.dataset.__len__()):
                 pass
+
+            samples = next(self.dataloader_iterator)
+            for i, sample in enumerate(samples['data_samples']):
+                x = self.runner.model.data_preprocessor(samples['inputs'][i])
+                res_out = self.runner.model.backbone.forward(x['inputs'])
+                neck_out = self.runner.model.neck.forward(res_out)
+                v[sample[i].gt_label].append(neck_out)
             
-            print(next(self.dataloader_iterator)['data_samples'][0].gt_label)
+            print(np.array(v).shape)
+            print(v)
+            next(self.dataloader_iterator)['data_samples'][0].gt_label)
             x = self.runner.model.data_preprocessor((next(self.dataloader_iterator)))
             
             res_out = self.runner.model.backbone.forward(x['inputs'])
