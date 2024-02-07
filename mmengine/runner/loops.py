@@ -572,6 +572,8 @@ class DOSTrainLoop(BaseLoop):
             for i, tens in enumerate(out): 
                 print(tens.shape)
 
+            print(out.shape)
+
             break
 
 
