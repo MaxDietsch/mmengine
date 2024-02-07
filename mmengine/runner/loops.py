@@ -571,7 +571,7 @@ class DOSTrainLoop(BaseLoop):
             x = self.runner.model.data_preprocessor(samples)
             res_out = self.runner.model.backbone.forward(x['inputs'])
             neck_out = self.runner.model.neck.forward(res_out)
-            print(neck_out.shape)
+            print(neck_out)
             for i, sample in enumerate(samples['data_samples']):
                 print(len(v))
                 print(sample.gt_label)
