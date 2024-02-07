@@ -568,7 +568,7 @@ class DOSTrainLoop(BaseLoop):
                 pass
 
             samples = next(self.dataloader_iterator)
-            print(samples['inputs'].shape)
+            print(samples['inputs'][0])
             for i, sample in enumerate(samples['data_samples']):
                 x = self.runner.model.data_preprocessor(samples['inputs'][i])
                 res_out = self.runner.model.backbone.forward(x)
