@@ -573,7 +573,7 @@ class DOSTrainLoop(BaseLoop):
             neck_out = self.runner.model.neck.forward(res_out)
 
             for i, sample in enumerate(samples['data_samples']):
-                v[sample[i].gt_label].append(neck_out[i])
+                v[sample.gt_label].append(neck_out[i])
                 print(i)
             
             print(np.array(v).shape)
