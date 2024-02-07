@@ -568,7 +568,7 @@ class DOSTrainLoop(BaseLoop):
 
             x = self.runner.model.data_preprocessor((next(self.dataloader_iterator)))
             
-            print(self.runner.model.backbone.forward(x['inputs'])
+            print(self.runner.model.backbone.forward(x['inputs']))
 
 
 
