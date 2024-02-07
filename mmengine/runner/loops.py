@@ -563,14 +563,7 @@ class DOSTrainLoop(BaseLoop):
         self.runner.call_hook('before_train_epoch')
         while self._iter < self._max_iters and not self.stop_training:
 
-            
-            print(self.dataloader)
-
-            print("_" * 20)
-
-            print(self.dataloader.dataset)
-
-
+            print(self.dataloader.dataset.__len__())
 
             self.runner.model.train()
 
