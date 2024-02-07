@@ -576,7 +576,7 @@ class DOSTrainLoop(BaseLoop):
             
             print(np.array(v).shape)
             print(v)
-            next(self.dataloader_iterator)['data_samples'][0].gt_label)
+            next(self.dataloader_iterator)['data_samples'][0].gt_label
             x = self.runner.model.data_preprocessor((next(self.dataloader_iterator)))
             
             res_out = self.runner.model.backbone.forward(x['inputs'])
