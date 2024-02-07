@@ -564,7 +564,11 @@ class DOSTrainLoop(BaseLoop):
         while self._iter < self._max_iters and not self.stop_training:
 
             
-            print(self.dataloader.dataset.metainfo)
+            print(self.dataloader)
+
+            print("_" * 20)
+
+            print(self.dataloader.dataset)
 
 
 
