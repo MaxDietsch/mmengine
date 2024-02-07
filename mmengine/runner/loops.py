@@ -563,7 +563,7 @@ class DOSTrainLoop(BaseLoop):
         self.runner.call_hook('before_train_epoch')
         while self._iter < self._max_iters and not self.stop_training:
             
-            v = [[] * 4]
+            v = [[] for _ in range(4)]
             for i in range(self.dataloader.dataset.__len__()):
                 pass
 
