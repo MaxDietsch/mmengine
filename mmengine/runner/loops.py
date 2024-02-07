@@ -574,7 +574,7 @@ class DOSTrainLoop(BaseLoop):
             for i, sample in enumerate(samples['data_samples']):
                 print(len(v))
                 print(sample.gt_label)
-                v[sample.gt_label] = append(neck_out[0][i])
+                v[sample.gt_label].append(neck_out[0][i])
                 print(i)
             
             #print(np.array(v).shape)
