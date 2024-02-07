@@ -567,7 +567,7 @@ class DOSTrainLoop(BaseLoop):
             for i in range(self.dataloader.dataset.__len__()):
                 pass
             
-            print(next(self.dataloader_iterator)['data_samples'][0]['DATA FIELDS']['gt_label'])
+            print(next(self.dataloader_iterator)['data_samples'][0].gt_label)
             x = self.runner.model.data_preprocessor((next(self.dataloader_iterator)))
             
             res_out = self.runner.model.backbone.forward(x['inputs'])
