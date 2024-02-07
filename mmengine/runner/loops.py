@@ -562,20 +562,16 @@ class DOSTrainLoop(BaseLoop):
         # as a big epoch and execute the corresponding hook.
         self.runner.call_hook('before_train_epoch')
         while self._iter < self._max_iters and not self.stop_training:
-
-
-            self.runner.model.train()
+            
+            v = []
             for i in range(self.dataloader.dataset.__len__()):
                 pass
-
+            
+            print(next(self.dataloader_iterator))
             x = self.runner.model.data_preprocessor((next(self.dataloader_iterator)))
             
             res_out = self.runner.model.backbone.forward(x['inputs'])
             neck_out = self.runner.model.neck.forward(res_out)
-            for i, tens in enumerate(neck_out): 
-                print(tens.shape)
-
-            print(out.shape)
 
             break
 
