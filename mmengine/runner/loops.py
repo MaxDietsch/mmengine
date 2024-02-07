@@ -568,7 +568,10 @@ class DOSTrainLoop(BaseLoop):
 
             x = self.runner.model.data_preprocessor((next(self.dataloader_iterator)))
             
-            print(self.runner.model.backbone.forward(x['inputs']))
+            out = self.runner.model.backbone.forward(x['inputs'])
+            for i, tens in enumerate(out): 
+                print(tens.shape)
+
             break
 
 
