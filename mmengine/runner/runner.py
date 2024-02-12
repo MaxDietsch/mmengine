@@ -47,7 +47,7 @@ from .checkpoint import (_load_checkpoint, _load_checkpoint_to_model,
                          find_latest_checkpoint, save_checkpoint,
                          weights_to_cpu)
 from .log_processor import LogProcessor
-from .loops import EpochBasedTrainLoop, IterBasedTrainLoop, TestLoop, ValLoop, DOSTrainLoop
+from .loops import EpochBasedTrainLoop, IterBasedTrainLoop, TestLoop, ValLoop
 from .priority import Priority, get_priority
 from .utils import _get_batch_size, set_random_seed
 
@@ -1528,7 +1528,7 @@ class Runner:
                     **loop_cfg, runner=self, dataloader=self._train_dataloader)
             else:
                 #loop = IterBasedTrainLoop(
-                loop = DOSTrainLoop(        
+                loop = IterBasedTrainLoop(        
                     **loop_cfg, runner=self, dataloader=self._train_dataloader)
         return loop  # type: ignore
 
