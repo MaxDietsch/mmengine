@@ -315,11 +315,8 @@ class IterBasedTrainLoop(BaseLoop):
                 batch = self.runner.model.data_preprocessor(data_batch, True)
                 input = batch['inputs']
                 label = batch['data_samples'][0].gt_label
-
-                print(self.runner.model.extract_feat(input)[0])
-                print(self.runner.model.neck(self.runner.model.backbone(input))[0])
                 
-                self.v[label].append(self.runner.model.neck(self.runner.model.backbone(input))[0])
+                self.v[label].append(self.runner.model.extract_feat(input)[0])
                 self.batch_idx[label].append(idx)
 
         # get mutual distance matrix
