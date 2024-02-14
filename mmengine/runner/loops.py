@@ -298,7 +298,7 @@ class IterBasedTrainLoop(BaseLoop):
         """int: Current iteration."""
         return self._iter
 
-    def generate_overloaded_samples():
+    def generate_overloaded_samples(self):
         with torch.no_grad():
             for idx, data_batch in enumerate(self.dataloader):
                 batch = self.runner.model.data_preprocessor(data_batch, True)
@@ -315,7 +315,7 @@ class IterBasedTrainLoop(BaseLoop):
         # initialize idx array which specifies which classes should 
         # be included in the training
 
-        generate_overloaded_samples()
+        self.generate_overloaded_samples()
 
         while self._epoch < self._max_epochs and not self.stop_training:
             # self.run_epoch(cls)
