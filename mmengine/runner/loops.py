@@ -323,7 +323,7 @@ class IterBasedTrainLoop(BaseLoop):
                 self.v[label].append(self.runner.model.neck(self.runner.model.backbone(input))[0])
                 self.batch_idx[label].append(idx)
 
-        print(l)
+        return l 
             
         # get mutual distance matrix
         self.calc_mutual_distance_matrix()
@@ -358,9 +358,16 @@ class IterBasedTrainLoop(BaseLoop):
         # initialize idx array which specifies which classes should 
         # be included in the training
 
-        self.generate_overloaded_samples()
+        l1 = self.generate_overloaded_samples()
 
-        self.generate_overloaded_samples()
+        l2 = self.generate_overloaded_samples()
+        
+        b = True
+        for i, x in enumerate(l1):
+            if l1[i] != l2[i]:
+                b = False
+        print(b) 
+
 
         while self._epoch < self._max_epochs and not self.stop_training:
             # self.run_epoch(cls)
