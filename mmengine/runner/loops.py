@@ -333,7 +333,7 @@ class IterBasedTrainLoop(BaseLoop):
                 n = []
                 
                 # get deep features with shortest distance to feature vector with batch index of batch_idx[i][j]
-                for x in torch.topk(self.d[i][j], self.k[i], largest = False).indices[1 : ]
+                for x in torch.topk(self.d[i][j], self.k[i], largest = False).indices[1 : ]:
                     n.append(self.v[i][x])
                 
                 # sample weight vectors
