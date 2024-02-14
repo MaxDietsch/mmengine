@@ -305,7 +305,7 @@ class IterBasedTrainLoop(BaseLoop):
                     if i == j:
                         self.d[h][i, j] = 99999999
                     self.d[h][i, j] = torch.norm(self.v[h][i] - self.v[h][j])
-                    self.d[h][j, i] = self.d[h][j, i]
+                    self.d[h][j, i] = self.d[h][i, j]
 
     def generate_overloaded_samples(self):
         with torch.no_grad():
