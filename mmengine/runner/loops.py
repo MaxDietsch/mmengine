@@ -309,8 +309,6 @@ class IterBasedTrainLoop(BaseLoop):
 
     def generate_overloaded_samples(self):
 
-        l = []
-
         # get deep features
         with torch.no_grad():
             for idx, data_batch in enumerate(self.dataloader):
@@ -318,13 +316,12 @@ class IterBasedTrainLoop(BaseLoop):
                 input = batch['inputs']
                 label = batch['data_samples'][0].gt_label
 
-                l.append(batch['data_samples'][0].gt_label)
-
+                print(self.runner.model.extract_feat(input)[0])
+                print(self.runner.model.neck(self.runner.model.backbone(input))[0])
+                
                 self.v[label].append(self.runner.model.neck(self.runner.model.backbone(input))[0])
                 self.batch_idx[label].append(idx)
 
-        return l 
-            
         # get mutual distance matrix
         self.calc_mutual_distance_matrix()
 
@@ -355,20 +352,6 @@ class IterBasedTrainLoop(BaseLoop):
         """Launch training."""
         self.runner.call_hook('before_train')
         
-        # initialize idx array which specifies which classes should 
-        # be included in the training
-
-        l1 = self.generate_overloaded_samples()
-
-        l2 = self.generate_overloaded_samples()
-        
-        b = True
-        for i, x in enumerate(l1):
-            if l1[i] != l2[i]:
-                b = False
-        print(b) 
-
-
         while self._epoch < self._max_epochs and not self.stop_training:
             # self.run_epoch(cls)
             self.run_epoch()
@@ -385,6 +368,9 @@ class IterBasedTrainLoop(BaseLoop):
     def run_epoch(self) -> None:
         """Iterate one epoch."""
         self.runner.call_hook('before_train_epoch')
+
+        self.generate_overloaded_samples()
+
         self.runner.model.train()
 
         for idx, data_batch in enumerate(self.dataloader):
