@@ -298,16 +298,27 @@ class IterBasedTrainLoop(BaseLoop):
         """int: Current iteration."""
         return self._iter
 
+    def calc_mutual_distance_matrix(self):
+        for h in range(self.num_classes):
+            for i in range(self.samples_per_class[h]):
+                for j in range(i, self.samples_per_class[h]):
+                    if i == j:
+                        self.d[h][i, j] = 99999999
+                    self.d[h][i, j] = torch.norm(self.v[h][i] - self.v[h][j])
+                    self.d[h][j, i] = self.d[h][j, i]
+
     def generate_overloaded_samples(self):
         with torch.no_grad():
             for idx, data_batch in enumerate(self.dataloader):
                 batch = self.runner.model.data_preprocessor(data_batch, True)
                 input = batch['inputs']
                 label = batch['data_samples'][0].gt_label
-                print(label)
-                #inputs = inputs.to(device)
 
-                self.v[label].append(self.runner.model.neck(self.runner.model.backbone(inputs)))                
+                self.v[label].append(self.runner.model.neck(self.runner.model.backbone(input)))
+                self.batch_idx[label].append(batch_index)
+
+            self.calc_mutual_distance_matrix()
+            print(self.d)
 
     def run(self) -> torch.nn.Module:
         """Launch training."""
