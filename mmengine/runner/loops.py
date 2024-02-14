@@ -303,7 +303,8 @@ class IterBasedTrainLoop(BaseLoop):
             for idx, data_batch in enumerate(self.dataloader):
                 batch = self.runner.model.data_preprocessor(data_batch, True)
                 input = batch['inputs']
-                print(batch)
+                label = barch['data_samples'].gt_label
+                print(label)
                 #inputs = inputs.to(device)
 
                 self.v[label].append(self.runner.model.neck(self.runner.model.backbone(inputs)))                
