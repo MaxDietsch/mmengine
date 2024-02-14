@@ -263,7 +263,8 @@ class IterBasedTrainLoop(BaseLoop):
 
         # for DOS
         print("22" *40)
-        print(self.dataloader.dataset.metainfo)
+        self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
+        print(self.num_classes)
         self.v = [[] for _ in range(4)]
         
 
