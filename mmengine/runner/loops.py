@@ -303,7 +303,7 @@ class IterBasedTrainLoop(BaseLoop):
             for idx, data_batch in enumerate(self.dataloader):
                 batch = self.runner.model.data_preprocessor(data_batch, True)
                 input = batch['inputs']
-                label = batch['data_samples'].gt_label
+                label = batch['data_samples'][0].gt_label
                 print(label)
                 #inputs = inputs.to(device)
 
