@@ -270,7 +270,7 @@ class IterBasedTrainLoop(BaseLoop):
         self.k = [0, 3, 3, 3]
 
         self.d = [torch.zeros((i, i)) for i in self.samples_per_class]
-        self.batch_idx = [[] for _ in range(num_classes)]
+        self.batch_idx = [[] for _ in range(self.num_classes)]
         self.v = [[] for _ in range(self.num_classes)]
         self.z = {'image': [], 'n': [], 'w': []}
 
