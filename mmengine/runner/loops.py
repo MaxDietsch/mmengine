@@ -308,17 +308,48 @@ class IterBasedTrainLoop(BaseLoop):
                     self.d[h][j, i] = self.d[h][i, j]
 
     def generate_overloaded_samples(self):
+
+        l = []
+
+        # get deep features
         with torch.no_grad():
             for idx, data_batch in enumerate(self.dataloader):
                 batch = self.runner.model.data_preprocessor(data_batch, True)
                 input = batch['inputs']
                 label = batch['data_samples'][0].gt_label
 
+                l.append(batch['data_samples'][0].gt_label)
+
                 self.v[label].append(self.runner.model.neck(self.runner.model.backbone(input))[0])
                 self.batch_idx[label].append(idx)
 
-            self.calc_mutual_distance_matrix()
-            print(self.d)
+        print(l)
+            
+        # get mutual distance matrix
+        self.calc_mutual_distance_matrix()
+
+        for i in range(self.num_classes):
+            for j in range(self.samples_per_class):
+                n = []
+                
+                # get deep features with shortest distance to feature vector with batch index of batch_idx[i][j]
+                for x in torch.topk(self.d[i][j], self.k[i], largest = False).indices[1 : ]
+                    n.append(self.v[i][x])
+                
+                # sample weight vectors
+                w = torch.abs(torch.randn(self.r[i], self.k[i]))
+                w /= torch.norm(w, dim=1, keepdim = True)
+                
+                # define overloaded sample
+                self.z['image'].append(self.batch_idx[i][j])
+                self.z['n'].append(n)
+                self.z['w'].append(w)
+        
+        # zero out big variables
+        self.v = [[] for _ in range(self.num_classes)]
+        self.batch_idx = [[] for _ in range(self.num_classes)]
+
+
 
     def run(self) -> torch.nn.Module:
         """Launch training."""
@@ -326,6 +357,8 @@ class IterBasedTrainLoop(BaseLoop):
         
         # initialize idx array which specifies which classes should 
         # be included in the training
+
+        self.generate_overloaded_samples()
 
         self.generate_overloaded_samples()
 
