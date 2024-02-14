@@ -262,10 +262,20 @@ class IterBasedTrainLoop(BaseLoop):
                 self.val_interval, dynamic_intervals)
 
         # for DOS
-        print("22" *40)
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
-        print(self.num_classes)
-        self.v = [[] for _ in range(4)]
+
+        #TODO: make samples_per_class and r as parameter of __init__
+        self.samples_per_class = [0, 45, 132, 539]
+        self.r = [0, 3, 2, 1]
+        self.k = [0, 3, 3, 3]
+
+        self.d = [torch.zeros((i, i)) for i in self.samples_per_class]
+        self.batch_idx = [[] for _ in range(num_classes)]
+        self.v = [[] for _ in range(self.num_classes)]
+        self.z = {'image': [], 'n': [], 'w': []}
+
+
+
         
 
     @property
