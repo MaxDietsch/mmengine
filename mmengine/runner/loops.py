@@ -209,7 +209,7 @@ class _InfiniteDataloaderIterator:
 
 
 @LOOPS.register_module()
-class IterBasedTrainLoop(BaseLoop):
+class DOSTrainLoop(BaseLoop):
     """Loop for epoch-based training.
 
     Args:
@@ -275,9 +275,6 @@ class IterBasedTrainLoop(BaseLoop):
         
         self.z = {'image': [], 'n': [], 'w': []}
 
-
-
-        
 
     @property
     def max_epochs(self):
@@ -408,10 +405,9 @@ class IterBasedTrainLoop(BaseLoop):
 
 
 
-"""
 @LOOPS.register_module()
 class IterBasedTrainLoop(BaseLoop):
-    """"""Loop for iter-based training.
+    """Loop for iter-based training.
 
     Args:
         runner (Runner): A reference of runner.
@@ -425,7 +421,7 @@ class IterBasedTrainLoop(BaseLoop):
             first element in the tuple is a milestone and the second
             element is a interval. The interval is used after the
             corresponding milestone. Defaults to None.
-    """""""
+    """
 
     def __init__(
             self,
@@ -466,26 +462,26 @@ class IterBasedTrainLoop(BaseLoop):
 
     @property
     def max_epochs(self):
-        """""""int: Total epochs to train model."""""""
+        """int: Total epochs to train model."""
         return self._max_epochs
 
     @property
     def max_iters(self):
-        """""""int: Total iterations to train model."""""""
+        """int: Total iterations to train model."""
         return self._max_iters
 
     @property
     def epoch(self):
-        """""""int: Current epoch."""""""
+        """int: Current epoch."""
         return self._epoch
 
     @property
     def iter(self):
-        """""""int: Current iteration."""""""
+        """int: Current iteration."""
         return self._iter
 
     def run(self) -> None:
-        """""""Launch training."""""""
+        """Launch training."""
         self.runner.call_hook('before_train')
         # In iteration-based training loop, we treat the whole training process
         # as a big epoch and execute the corresponding hook.
@@ -507,11 +503,11 @@ class IterBasedTrainLoop(BaseLoop):
         return self.runner.model
 
     def run_iter(self, data_batch: Sequence[dict]) -> None:
-        """""""Iterate one mini-batch.
+        """Iterate one mini-batch.
 
         Args:
             data_batch (Sequence[dict]): Batch of data from dataloader.
-        """""""
+        """
         self.runner.call_hook(
             'before_train_iter', batch_idx=self._iter, data_batch=data_batch)
         # Enable gradient accumulation mode and avoid unnecessary gradient
@@ -528,10 +524,9 @@ class IterBasedTrainLoop(BaseLoop):
         self._iter += 1
 
     def _decide_current_val_interval(self) -> None:
-        """""""Dynamically modify the ``val_interval``."""""""
+        """Dynamically modify the ``val_interval``."""
         step = bisect.bisect(self.dynamic_milestones, (self._iter + 1))
         self.val_interval = self.dynamic_intervals[step - 1]
-"""
 
 
 @LOOPS.register_module()
