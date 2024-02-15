@@ -332,8 +332,8 @@ class IterBasedTrainLoop(BaseLoop):
                     n.append(self.v[i][x])
                 
                 # sample weight vectors
-                w = torch.abs(torch.randn(self.r[i], self.k[i]))
-                w /= (torch.norm(w, dim=1, keepdim = True)).to(torch.device("cuda"))
+                w = (torch.abs(torch.randn(self.r[i], self.k[i]))).to(torch.device("cuda"))
+                w /= torch.norm(w, dim=1, keepdim = True)
                 
                 # define overloaded sample
                 self.z['image'].append(self.batch_idx[i][j])
