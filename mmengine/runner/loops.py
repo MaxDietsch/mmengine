@@ -232,6 +232,9 @@ class DOSTrainLoop(BaseLoop):
             runner,
             dataloader: Union[DataLoader, Dict],
             max_epochs: int,
+            k: List[int],
+            r: List[int],
+            samples_per_class: List[int]
             val_begin: int = 1,
             val_interval: int = 1,
             dynamic_intervals: Optional[List[Tuple[int, int]]] = None) -> None:
@@ -266,9 +269,9 @@ class DOSTrainLoop(BaseLoop):
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
 
         #TODO: make samples_per_class and r as parameter of __init__
-        self.samples_per_class = [0, 45, 132, 539]
-        self.r = [0, 3, 2, 1]
-        self.k = [0, 3, 2, 1]
+        self.samples_per_class = samples_per_class #[0, 45, 132, 539]
+        self.r = r #[0, 3, 2, 1]
+        self.k = r #[0, 3, 2, 1]
 
         self.d = [torch.zeros((i, i)) for i in self.samples_per_class]
         self.batch_idx = [[] for _ in range(self.num_classes)]
