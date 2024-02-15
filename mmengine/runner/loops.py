@@ -390,7 +390,7 @@ class IterBasedTrainLoop(BaseLoop):
         # outputs should be a dict of loss.
         outputs = self.runner.model.train_step(
             data_batch, 
-            self.z['n'][idx], self.z['w'],
+            self.z['n'][idx], self.z['w'][idx],
             optim_wrapper=self.runner.optim_wrapper)
 
         self.runner.call_hook(
