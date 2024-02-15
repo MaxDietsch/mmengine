@@ -388,7 +388,8 @@ class IterBasedTrainLoop(BaseLoop):
         # synchronization during gradient accumulation process.
         # outputs should be a dict of loss.
         outputs = self.runner.model.train_step(
-            data_batch, optim_wrapper=self.runner.optim_wrapper)
+            data_batch, optim_wrapper=self.runner.optim_wrapper,
+            self.z['n'][idx], self.z['w'])
 
         self.runner.call_hook(
             'after_train_iter',

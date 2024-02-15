@@ -8,5 +8,6 @@ from .utils import (COLLATE_FUNCTIONS, default_collate, pseudo_collate,
 __all__ = [
     'BaseDataset', 'Compose', 'force_full_init', 'ClassBalancedDataset',
     'ConcatDataset', 'RepeatDataset', 'DefaultSampler', 'InfiniteSampler',
-    'worker_init_fn', 'pseudo_collate', 'COLLATE_FUNCTIONS', 'default_collate', 'DynamicSampler', 'ROSSampler'
+    'worker_init_fn', 'pseudo_collate', 'COLLATE_FUNCTIONS', 'default_collate',
+    'DynamicSampler', 'ROSSampler', 'RUSSampler'
 ]
