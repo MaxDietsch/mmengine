@@ -329,7 +329,7 @@ class DOSTrainLoop(BaseLoop):
                 n = []
                 
                 # get deep features with shortest distance to feature vector with batch index of batch_idx[i][j]
-                for x in torch.topk(self.d[i][j], self.k[i] + 1, largest = False).indices:
+                for x in torch.topk(self.d[i][j], self.k[i], largest = False).indices:
                     n.append(self.v[i][x])
                 
                 # sample weight vectors
