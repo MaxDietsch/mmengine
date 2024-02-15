@@ -234,7 +234,7 @@ class DOSTrainLoop(BaseLoop):
             max_epochs: int,
             k: List[int],
             r: List[int],
-            samples_per_class: List[int]
+            samples_per_class: List[int],
             val_begin: int = 1,
             val_interval: int = 1,
             dynamic_intervals: Optional[List[Tuple[int, int]]] = None) -> None:
