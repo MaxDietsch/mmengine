@@ -268,7 +268,7 @@ class DOSTrainLoop(BaseLoop):
         #TODO: make samples_per_class and r as parameter of __init__
         self.samples_per_class = [0, 45, 132, 539]
         self.r = [0, 3, 2, 1]
-        self.k = [0, 3, 3, 3]
+        self.k = [0, 3, 2, 1]
 
         self.d = [torch.zeros((i, i)) for i in self.samples_per_class]
         self.batch_idx = [[] for _ in range(self.num_classes)]
