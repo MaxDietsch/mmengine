@@ -29,7 +29,7 @@ from mmengine.visualization import Visualizer
 from .base_loop import BaseLoop
 from .checkpoint import find_latest_checkpoint
 from .log_processor import LogProcessor
-from .loops import EpochBasedTrainLoop, IterBasedTrainLoop, TestLoop, ValLoop
+from .loops import EpochBasedTrainLoop, IterBasedTrainLoop, TestLoop, ValLoop, DOSTrainLoop
 from .priority import Priority, get_priority
 from .utils import _get_batch_size
 
