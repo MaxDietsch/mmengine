@@ -480,6 +480,24 @@ class CoSenTrainLoop(BaseLoop):
         """int: Current iteration."""
         return self._iter
 
+    # d = [[label]: [], [], [], [] ]
+
+    def calc_mutual_distance_matrix(self):
+
+        for i in range(self.num_classes):
+            for j in range(self.num_classes):
+                dist = 0 
+                if i == j:
+                    distances = torch.cdist(torch.stack(self.v[j]))
+                    d[i, j] = torch.sort(distances)[ : , 1 ].mean()
+                    continue
+
+                for k, t1 in enumerate(self.v[i]):
+                    dist += torch.min(torch.cdist(t1.unsqueeze(0), torch.stack(self.v[j])))
+                self.d[i, j] = dist / self.s_samples_per_class[i]
+
+
+
     def run(self) -> torch.nn.Module:
         """Launch training."""
         self.runner.call_hook('before_train')
@@ -490,21 +508,28 @@ class CoSenTrainLoop(BaseLoop):
             s_samples_per_class = [10, 10, 10, 10]
             v = [[] * self.num_classes]
 
+            # update S only in specific epochs like in the paper
             if self._epoch % s_freq == 0:
+
+                # get the deep features for each class
                 for idx, data_batch in enumerate(self.dataloader):
                     
                     inputs, data_samples = *data_batch
                     labels = torch.cat([i.gt_label for i in data_samples])
                     outs = self.runner.model.extract_feat(inputs)
 
-                    v[label].append(outs[idx]) for idx, label in enumerate(labels) if len(v[label]) < 10
+                    self.v[label].append(outs[idx]) for idx, label in enumerate(labels) if len(self.v[label]) < self.s_samples_per_class[label]
                     
-                    if all( x > y for x, y in zip([len(v[i]) for i in range(num_classes)], s_samples_per_class)):
+                    if all( x > y for x, y in zip([len(v[i]) for i in range(self.num_classes)], self.s_samples_per_class)):
                         break
+                
+                print(self.v)
 
 
+                # calculate S 
+                calc_mutual_distance_matrix()
+                print(self.d)
 
-        
 
 
             self.run_epoch()
