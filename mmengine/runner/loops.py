@@ -430,6 +430,8 @@ class CoSenTrainLoop(BaseLoop):
             runner,
             dataloader: Union[DataLoader, Dict],
             max_epochs: int,
+            s_freq: int, 
+            s_samples_per_class: List[int],
             val_begin: int = 1,
             val_interval: int = 1,
             dynamic_intervals: Optional[List[Tuple[int, int]]] = None) -> None:
@@ -459,6 +461,17 @@ class CoSenTrainLoop(BaseLoop):
         self.dynamic_milestones, self.dynamic_intervals = \
             calc_dynamic_intervals(
                 self.val_interval, dynamic_intervals)
+
+
+        # for CoSen
+        self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
+        self.s_freq = s_freq
+        self.s_samples_per_class = s_samples_per_class
+        self.d = torch.zeros((self.num_classes, self.num_classes))
+        self.v = [[] for _ in range(self.num_classes)]
+
+
+
 
     @property
     def max_epochs(self):
@@ -498,7 +511,7 @@ class CoSenTrainLoop(BaseLoop):
                     dist += torch.min(torch.sqrt(torch.sum(diff**2, axis = -1)))
 
 
-                    dist += torch.min(torch.cdist(t1.unsqueeze(0), torch.stack(self.v[j])))
+                    #dist += torch.min(torch.cdist(t1.unsqueeze(0), torch.stack(self.v[j])))
                 self.d[i, j] = dist / self.s_samples_per_class[i]
 
 
@@ -509,10 +522,6 @@ class CoSenTrainLoop(BaseLoop):
 
         while self._epoch < self._max_epochs and not self.stop_training:
             
-            s_freq = 10
-            s_samples_per_class = [10, 10, 10, 10]
-            v = [[] * self.num_classes]
-
             # update S only in specific epochs like in the paper
             if self._epoch % s_freq == 0:
 
@@ -530,6 +539,7 @@ class CoSenTrainLoop(BaseLoop):
                 
                 print(self.v)
                 self.v = torch.tensor(v)
+                print(self.v)
 
 
                 # calculate S 
