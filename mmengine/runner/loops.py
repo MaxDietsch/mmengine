@@ -538,11 +538,11 @@ class CoSenTrainLoop(BaseLoop):
                         [self.v[label].append(outs[0][ix]) for ix, label in enumerate(labels) if len(self.v[label]) < self.s_samples_per_class[label]]
                         
                         if all( x > y for x, y in zip([len(self.v[i]) for i in range(self.num_classes)], self.s_samples_per_class)):
+                            for i in range(num_classes):
+                                self.v[i] = torch.tensor(self.v[i])
                             break
                     
-                    print(self.v)
-                    self.v = torch.tensor(self.v)
-                    print(self.v.shape)
+                    print(self.v[0].shape)
 
 
                     # calculate S 
