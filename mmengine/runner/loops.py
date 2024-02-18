@@ -502,9 +502,7 @@ class CoSenTrainLoop(BaseLoop):
                 dist = 0 
                 if i == j:
                     distances = torch.cdist(self.v[j], self.v[j])
-                    print(distances)
-                    print(torch.sort(distances)[0])
-                    d[i, j] = torch.sort(distances)[ : , 1 ].mean()
+                    d[i, j] = torch.sort(distances)[0][ : , 1 ].mean()
                     continue
 
                 for k, t1 in enumerate(self.v[i]):
