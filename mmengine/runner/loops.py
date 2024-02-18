@@ -533,6 +533,7 @@ class CoSenTrainLoop(BaseLoop):
                         
                         inputs = data_batch['inputs']
                         inputs = inputs.to(torch.device('cuda'))
+                        print(inputs)
                         data_samples = data_batch['data_samples']
                         labels = torch.cat([i.gt_label for i in data_samples])
                         outs = self.runner.model.extract_feat(inputs)
