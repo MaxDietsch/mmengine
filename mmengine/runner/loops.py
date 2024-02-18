@@ -522,7 +522,7 @@ class CoSenTrainLoop(BaseLoop):
                 ratio = torch.sum(self.d[low_idx : high_idx, i]) / torch.sum(self.d[low_idx : high_idx , j])
                 self.c2c_sep[i, j] = 1/self.s_samples_per_class[i] * ratio
 
-        d.fill_(0)
+        self.d.fill_(0)
 
 
 
