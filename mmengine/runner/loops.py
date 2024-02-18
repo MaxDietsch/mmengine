@@ -524,6 +524,7 @@ class CoSenTrainLoop(BaseLoop):
         while self._epoch < self._max_epochs and not self.stop_training:
             
             # update S only in specific epochs like in the paper
+            """
             with torch.no_grad():
                 if self._epoch % self.s_freq == 0:
 
@@ -549,6 +550,7 @@ class CoSenTrainLoop(BaseLoop):
                     # calculate S 
                     calc_mutual_distance_matrix()
                     print(self.d)
+            """
 
 
 
@@ -566,6 +568,14 @@ class CoSenTrainLoop(BaseLoop):
     def run_epoch(self) -> None:
         """Iterate one epoch."""
         self.runner.call_hook('before_train_epoch')
+
+        for idx, data_batch in enumerate(self.dataloader):
+                        
+            inputs = data_batch['inputs']
+            data_samples = data_batch['data_samples']
+            labels = torch.cat([i.gt_label for i in data_samples])
+            outs = self.runner.model.extract_feat(inputs)
+            print(outs.shape)
 
         for idx, data_batch in enumerate(self.dataloader):
             self.run_iter(idx, data_batch)
