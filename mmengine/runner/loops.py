@@ -501,7 +501,7 @@ class CoSenTrainLoop(BaseLoop):
             for j in range(self.num_classes):
                 dist = 0 
                 if i == j:
-                    distances = torch.cdist(torch.stack(self.v[j]))
+                    distances = torch.cdist(self.v[j])
                     d[i, j] = torch.sort(distances)[ : , 1 ].mean()
                     continue
 
@@ -546,7 +546,7 @@ class CoSenTrainLoop(BaseLoop):
 
 
                     # calculate S 
-                    calc_mutual_distance_matrix()
+                    self.calc_mutual_distance_matrix()
                     print(self.d)
 
 
