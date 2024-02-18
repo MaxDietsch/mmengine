@@ -498,6 +498,10 @@ class CoSenTrainLoop(BaseLoop):
     def calc_c2c_separability(self):
 
         for i in range(self.num_classes):
+            low_idx = sum(self.s_samples_per_class[ : i ])
+            high_idx = sum(self.s_samples_per_class[  : i+1 ])
+            print(low_idx)
+            print(high_idx)
             for j in range(self.num_classes):
 
                 # get sorted distances
@@ -505,10 +509,6 @@ class CoSenTrainLoop(BaseLoop):
                 sorted_distances = (torch.sort(torch.cdist(self.v[i], self.v[j]))[0]).to(torch.device('cpu'))
                 # decide which element to take, the smallest (inter class) or the 2nd smallest (intra class)
                 entry_idx = 1 if i != j else 0
-                low_idx = sum(self.s_samples_per_class[ : i ])
-                high_idx = sum(self.s_samples_per_class[ i : i+1 ])
-                print(low_idx)
-                print(high_idx)
                 self.d[low_idx : high_idx, j] += sorted_distances[ : , entry_idx]
 
 
