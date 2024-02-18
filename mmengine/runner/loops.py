@@ -507,7 +507,7 @@ class CoSenTrainLoop(BaseLoop):
                 entry_idx = 1 if i != j else 0
                 low_idx = sum(self.s_samples_per_class[ : i ])
                 high_idx = sum(self.s_samples_per_class[ i : i+1 ])
-                d[low_idx : high_idx, j] += sorted_distances[ : , entry_idx]
+                self.d[low_idx : high_idx, j] += sorted_distances[ : , entry_idx]
 
 
         
