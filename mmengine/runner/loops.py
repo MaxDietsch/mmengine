@@ -514,8 +514,8 @@ class CoSenTrainLoop(BaseLoop):
 
         
         for i in range(self.num_classes):
-            low_idx = sum(self.s_samples_per_class[ : , i ])
-            high_idx = sum(self.s_samples_per_class[ i : i+1 ])
+            low_idx = sum(self.s_samples_per_class[ : i ])
+            high_idx = sum(self.s_samples_per_class[ : i+1 ])
             
             for j in range(self.num_classes):
 
