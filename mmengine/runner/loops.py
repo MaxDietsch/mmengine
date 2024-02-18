@@ -493,6 +493,11 @@ class CoSenTrainLoop(BaseLoop):
                     continue
 
                 for k, t1 in enumerate(self.v[i]):
+
+                    diff = self.v[j] - t1
+                    dist += torch.min(torch.sqrt(torch.sum(diff**2, axis = -1)))
+
+
                     dist += torch.min(torch.cdist(t1.unsqueeze(0), torch.stack(self.v[j])))
                 self.d[i, j] = dist / self.s_samples_per_class[i]
 
@@ -524,6 +529,7 @@ class CoSenTrainLoop(BaseLoop):
                         break
                 
                 print(self.v)
+                self.v = torch.tensor(v)
 
 
                 # calculate S 
