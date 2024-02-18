@@ -536,7 +536,7 @@ class CoSenTrainLoop(BaseLoop):
                         labels = torch.cat([i.gt_label for i in data_samples])
                         outs = self.runner.model.extract_feat(inputs)
 
-                        [self.v[label].append(outs[idx]) for idx, label in enumerate(labels) if len(self.v[label]) < self.s_samples_per_class[label]]
+                        [self.v[label].append(outs[ix]) for ix, label in enumerate(labels) if len(self.v[label]) < self.s_samples_per_class[label]]
                         
                         if all( x > y for x, y in zip([len(self.v[i]) for i in range(self.num_classes)], self.s_samples_per_class)):
                             break
