@@ -519,6 +519,7 @@ class CoSenTrainLoop(BaseLoop):
     def run(self) -> torch.nn.Module:
         """Launch training."""
         self.runner.call_hook('before_train')
+        self.runner.model.train()
 
         while self._epoch < self._max_epochs and not self.stop_training:
             
@@ -531,9 +532,8 @@ class CoSenTrainLoop(BaseLoop):
                         
                         inputs, data_samples = data_batch.values()
                         labels = torch.cat([i.gt_label for i in data_samples])
-                        print(inputs)
                         outs = self.runner.model.extract_feat(inputs)
-                        print(outs)
+                        print(outs.shape)
 
                         [self.v[label].append(outs[idx]) for idx, label in enumerate(labels) if len(self.v[label]) < self.s_samples_per_class[label]]
                         
@@ -565,7 +565,6 @@ class CoSenTrainLoop(BaseLoop):
     def run_epoch(self) -> None:
         """Iterate one epoch."""
         self.runner.call_hook('before_train_epoch')
-        self.runner.model.train()
 
         for idx, data_batch in enumerate(self.dataloader):
             self.run_iter(idx, data_batch)
