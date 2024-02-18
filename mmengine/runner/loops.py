@@ -542,8 +542,8 @@ class CoSenTrainLoop(BaseLoop):
                                 self.v[i] = torch.tensor(self.v[i])
                             break
 
-                    print(len(v))
-                    print(len(v[0]))
+                    print(len(self.v))
+                    print(len(self.v[0]))
                     
                     print(self.v[0].shape)
 
