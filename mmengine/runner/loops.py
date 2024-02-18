@@ -523,30 +523,31 @@ class CoSenTrainLoop(BaseLoop):
         while self._epoch < self._max_epochs and not self.stop_training:
             
             # update S only in specific epochs like in the paper
-            if self._epoch % self.s_freq == 0:
+            with torch.no_grad():
+                if self._epoch % self.s_freq == 0:
 
-                # get the deep features for each class
-                for idx, data_batch in enumerate(self.dataloader):
+                    # get the deep features for each class
+                    for idx, data_batch in enumerate(self.dataloader):
+                        
+                        inputs, data_samples = data_batch.values()
+                        labels = torch.cat([i.gt_label for i in data_samples])
+                        print(inputs)
+                        outs = self.runner.model.extract_feat(inputs)
+                        print(outs)
+
+                        [self.v[label].append(outs[idx]) for idx, label in enumerate(labels) if len(self.v[label]) < self.s_samples_per_class[label]]
+                        
+                        if all( x > y for x, y in zip([len(v[i]) for i in range(self.num_classes)], self.s_samples_per_class)):
+                            break
                     
-                    inputs, data_samples = data_batch.values()
-                    print(data_batch)
-                    print(data_samples)
-                    labels = torch.cat([i.gt_label for i in data_samples])
-                    outs = self.runner.model.extract_feat(inputs)
-
-                    [self.v[label].append(outs[idx]) for idx, label in enumerate(labels) if len(self.v[label]) < self.s_samples_per_class[label]]
-                    
-                    if all( x > y for x, y in zip([len(v[i]) for i in range(self.num_classes)], self.s_samples_per_class)):
-                        break
-                
-                print(self.v)
-                self.v = torch.tensor(v)
-                print(self.v)
+                    print(self.v)
+                    self.v = torch.tensor(v)
+                    print(self.v)
 
 
-                # calculate S 
-                calc_mutual_distance_matrix()
-                print(self.d)
+                    # calculate S 
+                    calc_mutual_distance_matrix()
+                    print(self.d)
 
 
 
