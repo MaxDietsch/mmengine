@@ -530,8 +530,7 @@ class CoSenTrainLoop(BaseLoop):
                     # get the deep features for each class
                     for idx, data_batch in enumerate(self.dataloader):
                         
-                        inputs, data_samples = data_batch.values()
-                        inputs = batch['inputs']
+                        inputs = data_batch['inputs']
                         labels = torch.cat([i.gt_label for i in data_samples])
                         outs = self.runner.model.extract_feat(inputs)
                         print(outs.shape)
