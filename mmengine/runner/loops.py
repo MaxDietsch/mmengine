@@ -467,8 +467,9 @@ class CoSenTrainLoop(BaseLoop):
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
         self.s_freq = s_freq
         self.s_samples_per_class = s_samples_per_class
-        self.d = torch.zeros((self.num_classes, self.num_classes))
+        self.d = torch.zeros((sum(self.s_samples_per_class), self.num_classes))
         self.v = [[] for _ in range(self.num_classes)]
+        self.c2c_sep = torch.zeros((self.num_classes, self.num_classes))
 
 
 
@@ -493,33 +494,40 @@ class CoSenTrainLoop(BaseLoop):
         """int: Current iteration."""
         return self._iter
 
-    # d = [[label]: [], [], [], [] ]
 
-    def calc_mutual_distance_matrix(self):
+    def calc_c2c_separability(self):
 
         for i in range(self.num_classes):
             for j in range(self.num_classes):
-                dist = 0 
-                if i == j:
-                    distances = torch.cdist(self.v[j], self.v[j])
-                    self.d[i, j] = torch.sort(distances)[0][ : , 1 ].mean()
-                    continue
 
-                for k, t1 in enumerate(self.v[i]):
+                # get sorted distances
+                # row l contains distance of v[i][l] to each of v[j]
+                sorted_distances = torch.sort(torch.cdist(self.v[i], self.v[j]))[0]
+                # decide which element to take, the smallest (inter class) or the 2nd smallest (intra class)
+                entry_idx = 1 if i != j else 0
+                low_idx = sum(self.s_samples_per_class[ : i ])
+                high_idx = sum(self.s_samples_per_class[ i : i+1 ])
+                d[low_idx : high_idx, j] += sorted_distances[ : , entry_idx]
 
-                    diff = self.v[j] - t1
-                    dist += torch.min(torch.sqrt(torch.sum(diff**2, axis = -1)))
 
+        
+        for i in range(self.num_classes):
+            low_idx = sum(self.s_samples_per_class[ : , i ])
+            high_idx = sum(self.s_samples_per_class[ i : i+1 ])
+            
+            for j in range(self.num_classes):
 
-                    #dist += torch.min(torch.cdist(t1.unsqueeze(0), torch.stack(self.v[j])))
-                self.d[i, j] = dist / self.s_samples_per_class[i]
+                ratio = torch.sum(d[low_idx : high_idx, i]) / torch.sum(d[low_idx : high_idx , j])
+                self.c2c_sep[i, j] = 1/self.s_samples_per_class[i] * ratio
+
+        d.fill_(0)
+
 
 
 
     def run(self) -> torch.nn.Module:
         """Launch training."""
         self.runner.call_hook('before_train')
-        self.runner.model.train()
 
         while self._epoch < self._max_epochs and not self.stop_training:
             
@@ -542,12 +550,10 @@ class CoSenTrainLoop(BaseLoop):
                                 self.v[i] = torch.stack(self.v[i], dim = 0)
                             break
 
-                    print(self.v[0].shape)
-
 
                     # calculate S 
-                    self.calc_mutual_distance_matrix()
-                    print(self.d)
+                    self.calc_c2c_separability()
+                    print(self.c2c_sep)
 
 
 
@@ -565,6 +571,7 @@ class CoSenTrainLoop(BaseLoop):
     def run_epoch(self) -> None:
         """Iterate one epoch."""
         self.runner.call_hook('before_train_epoch')
+        self.runner.model.train()
 
         for idx, data_batch in enumerate(self.dataloader):
             self.run_iter(idx, data_batch)
