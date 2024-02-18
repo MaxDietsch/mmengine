@@ -532,7 +532,7 @@ class CoSenTrainLoop(BaseLoop):
                     for idx, data_batch in enumerate(self.dataloader):
                         
                         inputs = data_batch['inputs']
-                        inputs = inputs.to(torch.device('cuda'))
+                        inputs = inputs.to(torch.device('cuda')).float()
                         print(inputs)
                         data_samples = data_batch['data_samples']
                         labels = torch.cat([i.gt_label for i in data_samples])
