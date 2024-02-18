@@ -541,8 +541,8 @@ class CoSenTrainLoop(BaseLoop):
                             break
                     
                     print(self.v)
-                    self.v = torch.tensor(v)
-                    print(self.v)
+                    self.v = torch.tensor(self.v)
+                    print(self.v.shape)
 
 
                     # calculate S 
