@@ -502,7 +502,7 @@ class CoSenTrainLoop(BaseLoop):
 
                 # get sorted distances
                 # row l contains distance of v[i][l] to each of v[j]
-                sorted_distances = torch.sort(torch.cdist(self.v[i], self.v[j]))[0]
+                sorted_distances = (torch.sort(torch.cdist(self.v[i], self.v[j]))[0]).to(torch.device('cpu'))
                 # decide which element to take, the smallest (inter class) or the 2nd smallest (intra class)
                 entry_idx = 1 if i != j else 0
                 low_idx = sum(self.s_samples_per_class[ : i ])
