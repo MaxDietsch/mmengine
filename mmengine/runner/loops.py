@@ -539,12 +539,9 @@ class CoSenTrainLoop(BaseLoop):
                         
                         if all( x >= y for x, y in zip([len(self.v[i]) for i in range(self.num_classes)], self.s_samples_per_class)):
                             for i in range(self.num_classes):
-                                self.v[i] = torch.tensor(self.v[i])
+                                self.v[i] = torch.stack(self.v[i], dim = 0)
                             break
 
-                    print(len(self.v))
-                    print(len(self.v[0]))
-                    
                     print(self.v[0].shape)
 
 
