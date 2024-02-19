@@ -17,6 +17,7 @@ from .utils import calc_dynamic_intervals
 import numpy as np
 from mmengine.dataset import DynamicSampler
 import torch.nn.functional as F
+from mmpretrain.evaluation import ConfusionMatrix
 
 @LOOPS.register_module()
 class EpochBasedTrainLoop(BaseLoop):
@@ -526,7 +527,6 @@ class CoSenTrainLoop(BaseLoop):
         self.y_true = torch.zeros((samples_per_class.sum()))
 
 
-
     @property
     def max_epochs(self):
         """int: Total epochs to train model."""
@@ -604,6 +604,10 @@ class CoSenTrainLoop(BaseLoop):
                     # calculate S 
                     self.calc_c2c_separability()
                     # print(self.c2c_sep)
+                    
+                    # calculate confusion matrix R
+                    r = ConfusionMatrix.calculate(y_pred, y_true, self.num_classes)
+                    print(r)
 
 
             self.run_epoch()
@@ -648,7 +652,6 @@ class CoSenTrainLoop(BaseLoop):
 
         # get true and predicted labels 
         true_labels = torch.cat([i.gt_label for i in data_batch['data_samples']])
-        print(true_labels)
         
         pred_scores = F.softmax(outputs[1], dim=1)
         pred_labels = pred_scores.argmax(dim=1, keepdim=True).detach().squeeze()
@@ -657,7 +660,6 @@ class CoSenTrainLoop(BaseLoop):
         batch_size = self.dataloader.batch_size
         self.y_pred[idx * batch_size : (idx + 1) * batch_size] = pred_labels
         self.y_true[idx * batch_size : (idx + 1) * batch_size] = true_labels
-        print(self.y_true)
 
         self.runner.call_hook(
             'after_train_iter',
