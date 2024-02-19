@@ -579,7 +579,7 @@ class CoSenTrainLoop(BaseLoop):
     # could be done by import of torchmetrics
     def confusion_matrix(self, y_pred, y_true):
         conf_matrix = torch.zeros(self.num_classes, self.num_classes, dtype=torch.int64)
-        for t, p in zip(labels.view(-1), preds.view(-1)):
+        for t, p in zip(y_true.view(-1), y_pred.view(-1)):
             conf_matrix[t.long(), p.long()] += 1
 
         print(conf_matrix.sum(1))
@@ -617,7 +617,7 @@ class CoSenTrainLoop(BaseLoop):
                     # print(self.c2c_sep)
                     
                     # calculate confusion matrix R
-                    r = self.confusion_matrix(y_pred, y_true)
+                    r = self.confusion_matrix(self.y_pred, self.y_true)
                     print(r)
 
 
