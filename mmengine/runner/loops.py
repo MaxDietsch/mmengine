@@ -16,8 +16,6 @@ from .utils import calc_dynamic_intervals
 # for usage of self made sampler
 import numpy as np
 from mmengine.dataset import DynamicSampler
-#from mmpretrain.models.classifiers import CoSenClassifier
-#from mmpretrain.models.classifiers import DOSClassifier
 
 @LOOPS.register_module()
 class EpochBasedTrainLoop(BaseLoop):
@@ -280,6 +278,7 @@ class DOSTrainLoop(BaseLoop):
                 self.val_interval, dynamic_intervals)
 
         # for DOS
+        from mmpretrain.models.classifiers import DOSClassifier # this is not good style
         if not isinstance(self.runner.model, DOSClassifier):
             raise TypeError('The model should be of type DOSClassifier')
 
@@ -498,7 +497,7 @@ class CoSenTrainLoop(BaseLoop):
 
 
         # for CoSen
-        from mmpretrain.models.classifiers import CoSenClassifier
+        from mmpretrain.models.classifiers import CoSenClassifier # this is not good style
         if not isinstance(self.runner.model, CoSenClassifier):
             raise TypeError('The model should be of type CoSenClassifier')
 
@@ -641,7 +640,7 @@ class CoSenTrainLoop(BaseLoop):
         outputs = self.runner.model.train_step(
             data_batch, optim_wrapper=self.runner.optim_wrapper)
         print("###### outputs of a batch")
-        print(outputs)[1]
+        print(outputs[1])
 
         pred_scores = F.softmax(outputs[1], dim=1)
         pred_labels = pred_scores.argmax(dim=1, keepdim=True).detach()
