@@ -582,10 +582,7 @@ class CoSenTrainLoop(BaseLoop):
         for t, p in zip(y_true.view(-1), y_pred.view(-1)):
             conf_matrix[t.long(), p.long()] += 1
 
-        print(conf_matrix.sum(1))
-        print(conf_matrix.sum(1, keepdim = True))
-        print(conf_matrix.sum(1).unsqueeze(1))
-        return conf_matrix
+        return conf_matrix / conf_matrix.sum(1, keepdim = True)
 
 
     def run(self) -> torch.nn.Module:
