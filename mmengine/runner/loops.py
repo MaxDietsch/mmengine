@@ -97,8 +97,8 @@ class EpochBasedTrainLoop(BaseLoop):
         
         # initialize idx array which specifies which classes should 
         # be included in the training
-        threshold = 0.3
-        cls = [i for i in range(self.runner.model.head.fc.out_features)]
+        #threshold = 0.3
+        #cls = [i for i in range(self.runner.model.head.fc.out_features)]
 
         while self._epoch < self._max_epochs and not self.stop_training:
             # self.run_epoch(cls)
