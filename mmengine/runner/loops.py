@@ -4,7 +4,6 @@ import time
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import torch
-from mmpretrain.evaluation import ConfusionMatrix
 from torch.utils.data import DataLoader
 
 from mmengine.evaluator import Evaluator
@@ -577,6 +576,18 @@ class CoSenTrainLoop(BaseLoop):
         self.d.fill_(0)
 
 
+    # could be done by import of torchmetrics
+    def confusion_matrix(self, y_pred, y_true):
+        conf_matrix = torch.zeros(self.num_classes, self.num_classes, dtype=torch.int64)
+        for t, p in zip(labels.view(-1), preds.view(-1)):
+            conf_matrix[t.long(), p.long()] += 1
+
+        print(conf_matrix.sum(1))
+        print(conf_matrix.sum(1, keepdim = True))
+        print(conf_matrix.sum(1).unsqueeze(1))
+    return conf_matrix
+
+
     def run(self) -> torch.nn.Module:
         """Launch training."""
         self.runner.call_hook('before_train')
@@ -606,7 +617,7 @@ class CoSenTrainLoop(BaseLoop):
                     # print(self.c2c_sep)
                     
                     # calculate confusion matrix R
-                    r = ConfusionMatrix.calculate(y_pred, y_true, self.num_classes)
+                    r = self.confusion_matrix(y_pred, y_true)
                     print(r)
 
 
