@@ -654,7 +654,8 @@ class CoSenTrainLoop(BaseLoop):
         print(pred_labels.shape)
         print(self.y_pred.shape)
 
-        self.y_pred[idx * self.dataloader.batch_size] = pred_labels
+        batch_size = self.dataloader.batch_size
+        self.y_pred[(idx -1) * batch_size : idx * batch_size] = pred_labels
         print(self.y_pred)
 
         self.runner.call_hook(
