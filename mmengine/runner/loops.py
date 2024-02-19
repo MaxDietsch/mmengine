@@ -642,21 +642,22 @@ class CoSenTrainLoop(BaseLoop):
         # synchronization during gradient accumulation process.
         # outputs should be a dict of loss.
 
-        # now return the loss and the cls_score of the model as a tuple
+        # now returns the loss and the cls_score of the model as a tuple
         outputs = self.runner.model.train_step(
             data_batch, optim_wrapper=self.runner.optim_wrapper)
-        print("###### outputs of a batch")
-        print(outputs[1])
 
+        # get true and predicted labels 
+        true_labels = torch.cat([i.gt_label for i in data_batch['data_samples']])
+        print(true_labels)
+        
         pred_scores = F.softmax(outputs[1], dim=1)
         pred_labels = pred_scores.argmax(dim=1, keepdim=True).detach().squeeze()
-        print(pred_labels)
-        print(pred_labels.shape)
-        print(self.y_pred.shape)
 
+        # fill the y_pred and y_true
         batch_size = self.dataloader.batch_size
         self.y_pred[idx * batch_size : (idx + 1) * batch_size] = pred_labels
-        print(self.y_pred)
+        self.y_true[idx * batch_size : (idx + 1) * batch_size] = true_labels
+        print(self.y_true)
 
         self.runner.call_hook(
             'after_train_iter',
