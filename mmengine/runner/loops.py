@@ -15,7 +15,9 @@ from .utils import calc_dynamic_intervals
 
 # for usage of self made sampler
 import numpy as np
-from mmengine.dataset import DynamicSampler 
+from mmengine.dataset import DynamicSampler
+from mmpretrain.models.classifiers import CoSenClassifier
+from mmpretrain.models.classifiers import DOSClassifier
 
 @LOOPS.register_module()
 class EpochBasedTrainLoop(BaseLoop):
@@ -278,6 +280,9 @@ class DOSTrainLoop(BaseLoop):
                 self.val_interval, dynamic_intervals)
 
         # for DOS
+        if not isinstance(self.runner.model, DOSClassifier):
+            raise TypeError('The model should be of type DOSClassifier')
+
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
 
         # set the overloading parameter k, set r and samples_per_class
@@ -493,6 +498,9 @@ class CoSenTrainLoop(BaseLoop):
 
 
         # for CoSen
+        if not isinstance(self.runner.model, CoSenClassifier):
+            raise TypeError('The model should be of type CoSenClassifier')
+
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
         self.s_freq = s_freq
         self.s_samples_per_class = s_samples_per_class
@@ -589,7 +597,7 @@ class CoSenTrainLoop(BaseLoop):
 
                     # calculate S 
                     self.calc_c2c_separability()
-                    print(self.c2c_sep)
+                    # print(self.c2c_sep)
 
 
             self.run_epoch()
@@ -599,6 +607,8 @@ class CoSenTrainLoop(BaseLoop):
                     and self._epoch >= self.val_begin
                     and self._epoch % self.val_interval == 0):
                 self.runner.val_loop.run()
+
+            break
 
         self.runner.call_hook('after_train')
         return self.runner.model
@@ -625,16 +635,22 @@ class CoSenTrainLoop(BaseLoop):
         # Enable gradient accumulation mode and avoid unnecessary gradient
         # synchronization during gradient accumulation process.
         # outputs should be a dict of loss.
+
+        # now return the loss and the cls_score of the model as a tuple
         outputs = self.runner.model.train_step(
             data_batch, optim_wrapper=self.runner.optim_wrapper)
         print("###### outputs of a batch")
-        print(outputs)
+        print(outputs)[1]
+
+        pred_scores = F.softmax(outputs[1], dim=1)
+        pred_labels = pred_scores.argmax(dim=1, keepdim=True).detach()
+        print(pred_labels)
 
         self.runner.call_hook(
             'after_train_iter',
             batch_idx=idx,
             data_batch=data_batch,
-            outputs=outputs)
+            outputs=outputs[0])
         self._iter += 1
 
     def _decide_current_val_interval(self) -> None:
