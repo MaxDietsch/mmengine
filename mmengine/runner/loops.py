@@ -16,6 +16,7 @@ from .utils import calc_dynamic_intervals
 # for usage of self made sampler
 import numpy as np
 from mmengine.dataset import DynamicSampler
+from mmpretrain.registry import MODELS
 #from mmpretrain.models.classifiers import CoSenClassifier
 #from mmpretrain.models.classifiers import DOSClassifier
 
