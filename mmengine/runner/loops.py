@@ -522,8 +522,8 @@ class CoSenTrainLoop(BaseLoop):
         self.h = torch.max(h1, h2)
         
         # for calculating confusion matrix store y_pred and y_true
-        self.y_pred = torch.zeros((samples_per_class.sum()))
-        self.y_true = torch.zeros((samples_per_class.sum()))
+        self.y_pred = torch.randint(5, (samples_per_class.sum()))
+        self.y_true = torch.randint(5, (samples_per_class.sum()))
 
 
     @property
@@ -613,7 +613,7 @@ class CoSenTrainLoop(BaseLoop):
                     self.calc_c2c_separability()
                     # print(self.c2c_sep)
                     
-                    # calculate confusion matrix R
+                    # calculate confusion matrix R (could be done with library torchmetrics)
                     r = self.confusion_matrix(self.y_pred, self.y_true)
                     print(r)
 
