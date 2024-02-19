@@ -16,6 +16,7 @@ from .utils import calc_dynamic_intervals
 # for usage of self made sampler
 import numpy as np
 from mmengine.dataset import DynamicSampler
+import torch.nn.functional as F
 
 @LOOPS.register_module()
 class EpochBasedTrainLoop(BaseLoop):
