@@ -4,6 +4,7 @@ import time
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import torch
+from mmpretrain.evaluation import ConfusionMatrix
 from torch.utils.data import DataLoader
 
 from mmengine.evaluator import Evaluator
@@ -17,7 +18,6 @@ from .utils import calc_dynamic_intervals
 import numpy as np
 from mmengine.dataset import DynamicSampler
 import torch.nn.functional as F
-from mmpretrain.evaluation import ConfusionMatrix
 
 @LOOPS.register_module()
 class EpochBasedTrainLoop(BaseLoop):
@@ -606,6 +606,7 @@ class CoSenTrainLoop(BaseLoop):
                     # print(self.c2c_sep)
                     
                     # calculate confusion matrix R
+                    Evaluator.
                     r = ConfusionMatrix.calculate(y_pred, y_true, self.num_classes)
                     print(r)
 
