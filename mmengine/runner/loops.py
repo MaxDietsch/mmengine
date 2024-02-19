@@ -649,7 +649,7 @@ class CoSenTrainLoop(BaseLoop):
         print(outputs[1])
 
         pred_scores = F.softmax(outputs[1], dim=1)
-        pred_labels = pred_scores.argmax(dim=1, keepdim=True).detach().squeeze()
+        pred_labels = pred_scores.argmax(dim=1, keepdim=True).detach().squeeze().view(( ,1))
         print(pred_labels)
 
         self.y_pred[idx * self.dataloader.batch_size] = pred_labels
