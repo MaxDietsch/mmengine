@@ -211,13 +211,25 @@ class _InfiniteDataloaderIterator:
 
 @LOOPS.register_module()
 class DOSTrainLoop(BaseLoop):
-    """Loop for epoch-based training.
+    """Loop for epoch-based training based on: 
+        Deep Over-sampling Framework for Classifying Imbalanced Data by Shin Ando and Chun Yuan Huang
+        Requirements: 
+            shuffle of dataloader should be set to False
+            requires as classifier model the DOSClassifier
+            requires as model head the DOSHead
+            requires as loss the DOSLoss
+            requires BatchSize to be 1 
+            new (non-default) parameter in the initializing (specified in train_cfg)
 
     Args:
         runner (Runner): A reference of runner.
         dataloader (Dataloader or dict): A dataloader object or a dict to
             build a dataloader.
         max_epochs (int): Total training epochs.
+        k (List[int]): set the overloading parameter of the algorithm for each class
+        r (List[int]): like in the paper (How many weights should be sampled per overloading
+            sample)
+        samples_per_class (List[int]): set how many samples are present in the dataset per class
         val_begin (int): The epoch that begins validating.
             Defaults to 1.
         val_interval (int): Validation interval. Defaults to 1.
@@ -268,15 +280,21 @@ class DOSTrainLoop(BaseLoop):
         # for DOS
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
 
-        #TODO: make samples_per_class and r as parameter of __init__
-        self.samples_per_class = samples_per_class #[0, 45, 132, 539]
+        # set the overloading parameter k, set r and samples_per_class
+        self.samples_per_class = samples_per_class 
         self.r = r #[0, 3, 2, 1]
         self.k = r #[0, 3, 2, 1]
-
+        
+        # store mutual distance matrix
         self.d = [torch.zeros((i, i)) for i in self.samples_per_class]
+
+        # for efficiency, so that idx of image in dataloader is stored and not whole image
         self.batch_idx = [[] for _ in range(self.num_classes)]
+
+        # store deep features 
         self.v = [[] for _ in range(self.num_classes)]
         
+        # store the overloaded training samples
         self.z = {'image': [], 'n': [], 'w': []}
 
 
@@ -301,6 +319,7 @@ class DOSTrainLoop(BaseLoop):
         return self._iter
 
     def calc_mutual_distance_matrix(self):
+        """calculates mutual distances between every deep feature belonging to the same class"""
         for h in range(self.num_classes):
             for i in range(self.samples_per_class[h]):
                 for j in range(i, self.samples_per_class[h]):
@@ -310,6 +329,7 @@ class DOSTrainLoop(BaseLoop):
                     self.d[h][j, i] = self.d[h][i, j]
 
     def generate_overloaded_samples(self):
+        """generates deep features like explained in the paper"""
 
         # get deep features
         with torch.no_grad():
@@ -341,7 +361,7 @@ class DOSTrainLoop(BaseLoop):
                 self.z['n'].append(n)
                 self.z['w'].append(w)
         
-        # zero out big variables
+        # zero out big variables for next iterations
         self.v = [[] for _ in range(self.num_classes)]
         self.batch_idx = [[] for _ in range(self.num_classes)]
 
@@ -352,7 +372,6 @@ class DOSTrainLoop(BaseLoop):
         self.runner.call_hook('before_train')
         
         while self._epoch < self._max_epochs and not self.stop_training:
-            # self.run_epoch(cls)
             self.run_epoch()
             self._decide_current_val_interval()
             if (self.runner.val_loop is not None
@@ -367,7 +386,8 @@ class DOSTrainLoop(BaseLoop):
     def run_epoch(self) -> None:
         """Iterate one epoch."""
         self.runner.call_hook('before_train_epoch')
-
+        
+        # get the overloaded samples
         self.generate_overloaded_samples()
 
         self.runner.model.train()
@@ -409,13 +429,21 @@ class DOSTrainLoop(BaseLoop):
 
 @LOOPS.register_module()
 class CoSenTrainLoop(BaseLoop):
-    """Loop for epoch-based training.
+    """Loop for epoch-based training based on:
+        Cost-Sensitive Learning of Deep Feature Representations from Imbalanced Data by S.H. Khan, M. Hayat ...
+        Requirements: 
+            new (non-default) parameters in the init.
 
     Args:
         runner (Runner): A reference of runner.
         dataloader (Dataloader or dict): A dataloader object or a dict to
             build a dataloader.
         max_epochs (int): Total training epochs.
+        s_freq (int): set the frequency how often S should be evaluated: f.e. 3 means S
+            is calculated every 3 epochs
+        s_samples_per_class (List[int]): set the number of samples per class which are 
+            included in the process of calculating S
+        samples_per_class (List[int]): set how many samples are present in the dataset per class
         val_begin (int): The epoch that begins validating.
             Defaults to 1.
         val_interval (int): Validation interval. Defaults to 1.
@@ -432,6 +460,7 @@ class CoSenTrainLoop(BaseLoop):
             max_epochs: int,
             s_freq: int, 
             s_samples_per_class: List[int],
+            samples_per_class: List[int],
             val_begin: int = 1,
             val_interval: int = 1,
             dynamic_intervals: Optional[List[Tuple[int, int]]] = None) -> None:
@@ -467,11 +496,21 @@ class CoSenTrainLoop(BaseLoop):
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
         self.s_freq = s_freq
         self.s_samples_per_class = s_samples_per_class
+
+        # store distances
         self.d = torch.zeros((sum(self.s_samples_per_class), self.num_classes))
+
+        # stores deep features
         self.v = [[] for _ in range(self.num_classes)]
+
+        # store c2c separabililty
         self.c2c_sep = torch.zeros((self.num_classes, self.num_classes))
 
-
+        # define H
+        samples_per_class = torch.tensor(samples_per_class)
+        h1 = samples_per_class.view(-1, 1)
+        h2 = samples_per_class.view(1, -1)
+        self.h = torch.max(h1, h2)
 
 
     @property
@@ -504,18 +543,14 @@ class CoSenTrainLoop(BaseLoop):
 
                 # get sorted distances
                 # row l contains distance of v[i][l] to each of v[j]
-
                 sorted_distances = (torch.sort(torch.cdist(self.v[i], self.v[j]))[0]).to(torch.device('cpu'))
                 # decide which element to take, the smallest (inter class) or the 2nd smallest (intra class)
                 entry_idx = 0 if i != j else 1
-
                 self.d[low_idx : high_idx, j] += sorted_distances[ : , entry_idx]
+        
+        #print(self.d)
 
-
-        print(self.d)
-
-
-
+        # based on the distances, fill S(p, q)
         for i in range(self.num_classes):
             low_idx = sum(self.s_samples_per_class[ : i ])
             high_idx = sum(self.s_samples_per_class[ : i+1 ])
@@ -528,8 +563,6 @@ class CoSenTrainLoop(BaseLoop):
         self.d.fill_(0)
 
 
-
-
     def run(self) -> torch.nn.Module:
         """Launch training."""
         self.runner.call_hook('before_train')
@@ -537,7 +570,6 @@ class CoSenTrainLoop(BaseLoop):
         while self._epoch < self._max_epochs and not self.stop_training:
             
             # update S only in specific epochs like in the paper
-            
             with torch.no_grad():
                 if self._epoch % self.s_freq == 0:
 
@@ -555,11 +587,9 @@ class CoSenTrainLoop(BaseLoop):
                                 self.v[i] = torch.stack(self.v[i], dim = 0)
                             break
 
-
                     # calculate S 
                     self.calc_c2c_separability()
                     print(self.c2c_sep)
-
 
 
             self.run_epoch()
@@ -597,6 +627,8 @@ class CoSenTrainLoop(BaseLoop):
         # outputs should be a dict of loss.
         outputs = self.runner.model.train_step(
             data_batch, optim_wrapper=self.runner.optim_wrapper)
+        print("###### outputs of a batch")
+        print(outputs)
 
         self.runner.call_hook(
             'after_train_iter',
