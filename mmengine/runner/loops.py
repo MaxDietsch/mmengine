@@ -652,7 +652,7 @@ class CoSenTrainLoop(BaseLoop):
         pred_labels = pred_scores.argmax(dim=1, keepdim=True).detach().squeeze()
         print(pred_labels)
 
-        self.y_pred[batch_idx * self.dataloader.batch_size] = pred_labels
+        self.y_pred[idx * self.dataloader.batch_size] = pred_labels
         print(self.y_pred)
 
         self.runner.call_hook(
