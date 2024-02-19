@@ -522,8 +522,8 @@ class CoSenTrainLoop(BaseLoop):
         self.h = torch.max(h1, h2)
         
         # for calculating confusion matrix store y_pred and y_true
-        self.y_pred = torch.zeros((samples_per_class.sum(), ))
-        self.y_true = torch.zeros((samples_per_class.sum(), ))
+        self.y_pred = torch.zeros((samples_per_class.sum()))
+        self.y_true = torch.zeros((samples_per_class.sum()))
 
 
 
@@ -649,8 +649,10 @@ class CoSenTrainLoop(BaseLoop):
         print(outputs[1])
 
         pred_scores = F.softmax(outputs[1], dim=1)
-        pred_labels = pred_scores.argmax(dim=1, keepdim=True).detach().squeeze().view(( ,1))
+        pred_labels = pred_scores.argmax(dim=1, keepdim=True).detach().squeeze()
         print(pred_labels)
+        print(pred_labels.shape)
+        print(self.y_pred.shape)
 
         self.y_pred[idx * self.dataloader.batch_size] = pred_labels
         print(self.y_pred)
