@@ -606,7 +606,6 @@ class CoSenTrainLoop(BaseLoop):
                     # print(self.c2c_sep)
                     
                     # calculate confusion matrix R
-                    Evaluator.
                     r = ConfusionMatrix.calculate(y_pred, y_true, self.num_classes)
                     print(r)
 
