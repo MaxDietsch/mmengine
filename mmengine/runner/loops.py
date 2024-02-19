@@ -585,7 +585,7 @@ class CoSenTrainLoop(BaseLoop):
         print(conf_matrix.sum(1))
         print(conf_matrix.sum(1, keepdim = True))
         print(conf_matrix.sum(1).unsqueeze(1))
-    return conf_matrix
+        return conf_matrix
 
 
     def run(self) -> torch.nn.Module:
