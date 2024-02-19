@@ -522,8 +522,8 @@ class CoSenTrainLoop(BaseLoop):
         self.h = torch.max(h1, h2)
         
         # for calculating confusion matrix store y_pred and y_true
-        self.y_pred = torch.randint(5, (samples_per_class.sum()))
-        self.y_true = torch.randint(5, (samples_per_class.sum()))
+        self.y_pred = torch.randint(5, (samples_per_class.sum(), ))
+        self.y_true = torch.randint(5, (samples_per_class.sum(), ))
 
 
     @property
