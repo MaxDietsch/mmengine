@@ -449,6 +449,7 @@ class CoSenTrainLoop(BaseLoop):
         s_samples_per_class (List[int]): set the number of samples per class which are 
             included in the process of calculating S
         samples_per_class (List[int]): set how many samples are present in the dataset per class
+        mu1, mu2, s1, s2 (float): Hyperparameters of the CoSen algorithm 
         val_begin (int): The epoch that begins validating.
             Defaults to 1.
         val_interval (int): Validation interval. Defaults to 1.
@@ -466,6 +467,10 @@ class CoSenTrainLoop(BaseLoop):
             s_freq: int, 
             s_samples_per_class: List[int],
             samples_per_class: List[int],
+            mu1: float,
+            mu2: float,
+            s1: float,
+            s2: float, 
             val_begin: int = 1,
             val_interval: int = 1,
             dynamic_intervals: Optional[List[Tuple[int, int]]] = None) -> None:
@@ -524,6 +529,12 @@ class CoSenTrainLoop(BaseLoop):
         # for calculating confusion matrix store y_pred and y_true
         self.y_pred = torch.randint(self.num_classes, (samples_per_class.sum(), ))
         self.y_true = torch.randint(self.num_classes, (samples_per_class.sum(), ))
+        
+        # Hyperparameter
+        self.mu1 = mu1 
+        self.mu2 = mu2 
+        self.s1 = s1
+        self.s2 = s2
 
 
     @property
@@ -581,7 +592,8 @@ class CoSenTrainLoop(BaseLoop):
         conf_matrix = torch.zeros(self.num_classes, self.num_classes, dtype=torch.int64)
         for t, p in zip(y_true.view(-1), y_pred.view(-1)):
             conf_matrix[t, p] += 1
-
+        
+        # to get probabilities
         return conf_matrix / conf_matrix.sum(1, keepdim = True)
 
 
@@ -616,6 +628,14 @@ class CoSenTrainLoop(BaseLoop):
                     # calculate confusion matrix R (could be done with library torchmetrics)
                     r = self.confusion_matrix(self.y_pred, self.y_true)
                     print(r)
+
+                    t_temp = torch.mul(torch.exp( - (self.c2c_sep - self.mu1) ** 2 / (2 * self.s1 ** 2)), torch.exp( - (r - self.mu2) ** 2 / (2 * self.s2 ** 2)))
+                    t = torch.mul(self.h, t_temp)
+
+                    grad = self.runner.model.head.loss_module.compute_grad(t.view(-1, 1))
+                    print(grad)
+
+
 
 
             self.run_epoch()
