@@ -624,6 +624,7 @@ class CoSenTrainLoop(BaseLoop):
 
                     # calculate S 
                     self.calc_c2c_separability()
+                    self.v = [[] for _ in range(self.num_classes)]
                     # print(self.c2c_sep)
                     
                     # calculate confusion matrix R (could be done with library torchmetrics)
