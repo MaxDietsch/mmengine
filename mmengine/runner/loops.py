@@ -653,7 +653,6 @@ class CoSenTrainLoop(BaseLoop):
                     and self._epoch % self.val_interval == 0):
                 self.runner.val_loop.run()
 
-            break
 
         self.runner.call_hook('after_train')
         return self.runner.model
