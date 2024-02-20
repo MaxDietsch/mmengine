@@ -536,6 +536,9 @@ class CoSenTrainLoop(BaseLoop):
         self.mu2 = mu2 
         self.s1 = s1
         self.s2 = s2
+        
+        # store best accurcy, used for updating learning rate of cosen matrix 
+        self.best_acc = 0
 
 
     @property
@@ -653,6 +656,14 @@ class CoSenTrainLoop(BaseLoop):
                     and self._epoch >= self.val_begin
                     and self._epoch % self.val_interval == 0):
                 metric = self.runner.val_loop.run()
+            
+            # if new accuracy is better than before update learning rate of cosen matrix
+            if metric['accuracy/top1'] > self.best_acc and self._epoch % self.s_freq == 0 and self._epoch != 0:
+                new_lr = self.runner.model.head.loss_module.get_xi_lr() * 0.01
+                self.runner.model.head.loss_module.update_xi(new_lr)
+                print("--------------set new lr for xi--------------------")
+
+
 
             print(metric) 
 
