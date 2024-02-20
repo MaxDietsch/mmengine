@@ -692,6 +692,7 @@ class CoSenTrainLoop(BaseLoop):
 
         # fill the y_pred and y_true
         batch_size = self.dataloader.batch_size
+        print(batch_size)
         self.y_pred[idx * batch_size : (idx + 1) * batch_size] = pred_labels
         self.y_true[idx * batch_size : (idx + 1) * batch_size] = true_labels
 
