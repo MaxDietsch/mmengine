@@ -627,13 +627,16 @@ class CoSenTrainLoop(BaseLoop):
                     
                     # calculate confusion matrix R (could be done with library torchmetrics)
                     r = self.confusion_matrix(self.y_pred, self.y_true)
-                    print(r)
+                    # print(r)
 
                     t_temp = torch.mul(torch.exp( - (self.c2c_sep - self.mu1) ** 2 / (2 * self.s1 ** 2)), torch.exp( - (r - self.mu2) ** 2 / (2 * self.s2 ** 2)))
                     t = torch.mul(self.h, t_temp)
+                    print(t)
 
                     grad = self.runner.model.head.loss_module.compute_grad(t.view(-1, 1))
                     print(grad)
+
+                    break
 
 
 
