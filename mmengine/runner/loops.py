@@ -522,8 +522,9 @@ class CoSenTrainLoop(BaseLoop):
 
         # define H
         samples_per_class = torch.tensor(samples_per_class)
-        h1 = samples_per_class.view(-1, 1) / samples_per_class.sum()
-        h2 = samples_per_class.view(1, -1) / samples_per_class.sum()
+        self.size_dataset = samples_per_class.sum()
+        h1 = samples_per_class.view(-1, 1) / self.size_dataset
+        h2 = samples_per_class.view(1, -1) / self.size_dataset
         self.h = torch.max(h1, h2)
         
         # for calculating confusion matrix store y_pred and y_true
@@ -692,9 +693,10 @@ class CoSenTrainLoop(BaseLoop):
 
         # fill the y_pred and y_true
         batch_size = self.dataloader.batch_size
-        print(batch_size)
-        self.y_pred[idx * batch_size : (idx + 1) * batch_size] = pred_labels
-        self.y_true[idx * batch_size : (idx + 1) * batch_size] = true_labels
+        low_idx = idx * batch_size
+        high_idx = max((idx + 1) * batch_size, self.size_dataset)
+        self.y_pred[low_idx : high_idx] = pred_labels
+        self.y_true[low_idx: high_idx] = true_labels
 
         self.runner.call_hook(
             'after_train_iter',
