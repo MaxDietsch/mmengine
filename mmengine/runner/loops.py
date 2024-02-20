@@ -606,7 +606,7 @@ class CoSenTrainLoop(BaseLoop):
             
             # update S only in specific epochs like in the paper
             with torch.no_grad():
-                if self._epoch % self.s_freq == 0:
+                if self._epoch % self.s_freq == 0 and self._epoch != 0:
 
                     # get the deep features for each class
                     for idx, data_batch in enumerate(self.dataloader):
