@@ -522,8 +522,8 @@ class CoSenTrainLoop(BaseLoop):
 
         # define H
         samples_per_class = torch.tensor(samples_per_class)
-        h1 = samples_per_class.view(-1, 1)
-        h2 = samples_per_class.view(1, -1)
+        h1 = samples_per_class.view(-1, 1) / samples_per_class.sum()
+        h2 = samples_per_class.view(1, -1) / samples_per_class.sum()
         self.h = torch.max(h1, h2)
         
         # for calculating confusion matrix store y_pred and y_true
@@ -631,10 +631,8 @@ class CoSenTrainLoop(BaseLoop):
 
                     t_temp = torch.mul(torch.exp( - (self.c2c_sep - self.mu1) ** 2 / (2 * self.s1 ** 2)), torch.exp( - (r - self.mu2) ** 2 / (2 * self.s2 ** 2)))
                     t = torch.mul(self.h, t_temp)
+                    print(t)
 
-                    print(torch.exp( - (self.c2c_sep - self.mu1) ** 2 / (2 * self.s1 ** 2)))
-                    print(torch.exp( - (r - self.mu2) ** 2 / (2 * self.s2 ** 2)))
-                    print(self.h)
 
                     grad = self.runner.model.head.loss_module.compute_grad(t.view(-1, 1))
                     print(grad)
