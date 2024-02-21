@@ -285,7 +285,7 @@ class DOSTrainLoop(BaseLoop):
             raise TypeError('The model should be of type DOSClassifier')
         
         from ..dataset.sampler import DOSSampler
-        assert self.dataloader.sampler isinstance (DOSSampler), 'The sampler of the dataloader should be of type DOSSampler'
+        assert self.dataloader.sampler isinstance(DOSSampler), 'The sampler of the dataloader should be of type DOSSampler'
 
         assert self.dataloader.batch_size == 1, 'The batch size should be set to 1 if you want to use DOS'        
 
