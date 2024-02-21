@@ -105,7 +105,43 @@ class DefaultSampler(Sampler):
         """
         self.epoch = epoch
 
-# like above but DynamicSampler which is capable of ROS
+
+@DATA_SAMPLERS.register_module()
+class DOSSampler(DefaultSampler):
+    """
+        The only difference from DefaultSampler is that we can set the generator to have more
+        control over the randomness in the trainloop
+    """
+
+    def __init__(self, **kwargs):
+        super(DOSSampler, self).__init__(**kwargs)
+        self.g = torch.Generator()
+
+    def reset_generator(self, seed, epoch):
+        self.g.manual_seed(seed + epoch)
+
+
+    def __iter__(self) -> Iterator[int]:
+        """Iterate the indices."""
+        # deterministically shuffle based on epoch and seed
+        if self.shuffle:
+            indices = torch.randperm(len(self.dataset), generator=self.g).tolist()
+        else:
+            indices = torch.arange(len(self.dataset)).tolist()
+
+        # add extra samples to make it evenly divisible
+        if self.round_up:
+            indices = (
+                indices *
+                int(self.total_size / len(indices) + 1))[:self.total_size]
+
+        # subsample
+        indices = indices[self.rank:self.total_size:self.world_size]
+
+        return iter(indices)
+
+
+# like DefaultSampler above but DynamicSampler which is capable of ROS
 @DATA_SAMPLERS.register_module()
 class DynamicSampler(Sampler):
     # num_classes should be the number of classes 

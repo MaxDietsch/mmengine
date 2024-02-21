@@ -220,6 +220,7 @@ class DOSTrainLoop(BaseLoop):
             requires as model head the DOSHead
             requires as loss the DOSLoss
             requires BatchSize to be 1 
+            requires DOSSampler as sampler of the dataloader
             new (non-default) parameter in the initializing (specified in train_cfg)
 
     Args:
@@ -284,6 +285,9 @@ class DOSTrainLoop(BaseLoop):
             raise TypeError('The model should be of type DOSClassifier')
 
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
+
+        # for generator of dataloader sampler
+        self.seed = 0
 
         # set the overloading parameter k, set r and samples_per_class
         self.samples_per_class = samples_per_class 
@@ -378,6 +382,8 @@ class DOSTrainLoop(BaseLoop):
         self.runner.call_hook('before_train')
         
         while self._epoch < self._max_epochs and not self.stop_training:
+            self.dataloader.sampler.reset_generator(self.seed, self._epoch)
+
             self.run_epoch()
             self._decide_current_val_interval()
             if (self.runner.val_loop is not None
@@ -393,14 +399,14 @@ class DOSTrainLoop(BaseLoop):
         """Iterate one epoch."""
         self.runner.call_hook('before_train_epoch')
         
+        self.dataloader.sampler.reset_generator(self.seed, self._epoch)
         # get the overloaded samples
         self.generate_overloaded_samples()
 
-        self.dataloader.sampler.shuffle = False
-        print("sampler set to False")
 
         self.runner.model.train()
 
+        self.dataloader.sampler.reset_generator(self.seed, self._epoch)
         for idx, data_batch in enumerate(self.dataloader):
             batch = self.runner.model.data_preprocessor(data_batch, True)
             input = batch['inputs']
@@ -408,9 +414,7 @@ class DOSTrainLoop(BaseLoop):
             print(label)
             self.run_iter(idx, data_batch)
         
-        self.dataloader.sampler.shuffle = True
-        print('shuffle set to true')
-
+        
         self.runner.call_hook('after_train_epoch')
         self._epoch += 1
 
