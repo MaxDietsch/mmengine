@@ -402,7 +402,8 @@ class DOSTrainLoop(BaseLoop):
         self.dataloader.sampler.reset_generator(self.seed, self._epoch)
         # get the overloaded samples
         self.generate_overloaded_samples()
-
+        
+        print('reset dataloader ------------------------------------------')
 
         self.runner.model.train()
 
