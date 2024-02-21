@@ -396,7 +396,7 @@ class DOSTrainLoop(BaseLoop):
         # get the overloaded samples
         self.generate_overloaded_samples()
 
-        self.runner.dataloader.sampler.shuffle = False
+        self.dataloader.sampler.shuffle = False
         print("sampler set to False")
 
         self.runner.model.train()
@@ -408,7 +408,7 @@ class DOSTrainLoop(BaseLoop):
             print(label)
             self.run_iter(idx, data_batch)
         
-        self.runner.dataloader.sampler.shuffle = True
+        self.dataloader.sampler.shuffle = True
         print('shuffle set to true')
 
         self.runner.call_hook('after_train_epoch')
