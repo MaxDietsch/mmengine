@@ -281,7 +281,7 @@ class DOSTrainLoop(BaseLoop):
 
         # for DOS
         from mmpretrain.models.classifiers import DOSClassifier # this is not good style
-        assert isinstance(self.runner.model, DOSClassifier), 'The model should be of type DOSClassifier')
+        assert isinstance(self.runner.model, DOSClassifier), 'The model should be of type DOSClassifier'
         
         from ..dataset.sampler import DOSSampler
         assert isinstance(self.dataloader.sampler, DOSSampler), 'The sampler of the dataloader should be of type DOSSampler'
