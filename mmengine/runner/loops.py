@@ -283,6 +283,11 @@ class DOSTrainLoop(BaseLoop):
         from mmpretrain.models.classifiers import DOSClassifier # this is not good style
         if not isinstance(self.runner.model, DOSClassifier):
             raise TypeError('The model should be of type DOSClassifier')
+        
+        from ..dataset.sampler import DOSSampler
+        assert self.dataloader.sampler isinstance (DOSSampler), 'The sampler of the dataloader should be of type DOSSampler'
+
+        assert self.dataloader.batch_size == 1, 'The batch size should be set to 1 if you want to use DOS'        
 
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
 
@@ -398,21 +403,16 @@ class DOSTrainLoop(BaseLoop):
     def run_epoch(self) -> None:
         """Iterate one epoch."""
         self.runner.call_hook('before_train_epoch')
-        
+
+        # reset dataloader, so that the images are feed in the same permutation
         self.dataloader.sampler.reset_generator(self.seed, self._epoch)
         # get the overloaded samples
         self.generate_overloaded_samples()
         
-        print('reset dataloader ------------------------------------------')
-
         self.runner.model.train()
-
         self.dataloader.sampler.reset_generator(self.seed, self._epoch)
         for idx, data_batch in enumerate(self.dataloader):
             batch = self.runner.model.data_preprocessor(data_batch, True)
-            input = batch['inputs']
-            label = batch['data_samples'][0].gt_label
-            print(label)
             self.run_iter(idx, data_batch)
         
         
@@ -452,7 +452,8 @@ class DOSTrainLoop(BaseLoop):
 class CoSenTrainLoop(BaseLoop):
     """Loop for epoch-based training based on:
         Cost-Sensitive Learning of Deep Feature Representations from Imbalanced Data by S.H. Khan, M. Hayat ...
-        Requirements: 
+        Requirements:
+            model must be of type CoSenClassifier
             new (non-default) parameters in the init.
 
     Args:
@@ -677,6 +678,7 @@ class CoSenTrainLoop(BaseLoop):
             
             # if new accuracy is better than before update learning rate of cosen matrix
             if metric['accuracy/top1'] > self.best_acc and not self.updated:
+                print('Update learning rate of CoSen matrix')
                 new_lr = self.runner.model.head.loss_module.get_xi_lr() * 0.01
                 self.runner.model.head.loss_module.update_xi(new_lr)
                 self.updated = True
