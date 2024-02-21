@@ -342,6 +342,7 @@ class DOSTrainLoop(BaseLoop):
                 batch = self.runner.model.data_preprocessor(data_batch, True)
                 input = batch['inputs']
                 label = batch['data_samples'][0].gt_label
+                print(label)
                 
                 self.v[label].append(self.runner.model.extract_feat(input)[0])
                 self.batch_idx[label].append(idx)
@@ -395,10 +396,20 @@ class DOSTrainLoop(BaseLoop):
         # get the overloaded samples
         self.generate_overloaded_samples()
 
+        self.runner.dataloader.sampler.shuffle = False
+        print("sampler set to False")
+
         self.runner.model.train()
 
         for idx, data_batch in enumerate(self.dataloader):
+            batch = self.runner.model.data_preprocessor(data_batch, True)
+            input = batch['inputs']
+            label = batch['data_samples'][0].gt_label
+            print(label)
             self.run_iter(idx, data_batch)
+        
+        self.runner.dataloader.sampler.shuffle = True
+        print('shuffle set to true')
 
         self.runner.call_hook('after_train_epoch')
         self._epoch += 1
@@ -539,7 +550,7 @@ class CoSenTrainLoop(BaseLoop):
         
         # store best accurcy, used for updating learning rate of cosen matrix 
         self.best_acc = 0
-
+        self.updated = False
 
     @property
     def max_epochs(self):
@@ -610,6 +621,8 @@ class CoSenTrainLoop(BaseLoop):
             # update S only in specific epochs like in the paper
             with torch.no_grad():
                 if self._epoch % self.s_freq == 0 and self._epoch != 0:
+                    # reset updated lr 
+                    self.updated = False
 
                     # get the deep features for each class
                     for idx, data_batch in enumerate(self.dataloader):
@@ -658,14 +671,10 @@ class CoSenTrainLoop(BaseLoop):
                 metric = self.runner.val_loop.run()
             
             # if new accuracy is better than before update learning rate of cosen matrix
-            if metric['accuracy/top1'] > self.best_acc and self._epoch % self.s_freq == 0 and self._epoch != 0:
+            if metric['accuracy/top1'] > self.best_acc and not self.updated:
                 new_lr = self.runner.model.head.loss_module.get_xi_lr() * 0.01
                 self.runner.model.head.loss_module.update_xi(new_lr)
-                print("--------------set new lr for xi--------------------")
-
-
-
-            print(metric) 
+                self.updated = True
 
 
         self.runner.call_hook('after_train')
