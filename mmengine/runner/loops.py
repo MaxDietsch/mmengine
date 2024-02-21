@@ -281,12 +281,12 @@ class DOSTrainLoop(BaseLoop):
 
         # for DOS
         from mmpretrain.models.classifiers import DOSClassifier # this is not good style
-        assert isinstance(self.runner.model, DOSClassifier), 'The model should be of type DOSClassifier'
+        assert isinstance(self.runner.model, DOSClassifier), 'The model should be of type DOSClassifier when using DOSTrainLoop'
         
         from ..dataset.sampler import DOSSampler
-        assert isinstance(self.dataloader.sampler, DOSSampler), 'The sampler of the dataloader should be of type DOSSampler'
+        assert isinstance(self.dataloader.sampler, DOSSampler), 'The sampler of the dataloader should be of type DOSSampler when using DOSTrainLoop'
 
-        assert self.dataloader.batch_size == 1, 'The batch size should be set to 1 if you want to use DOS'        
+        assert self.dataloader.batch_size == 1, 'The batch size should be set to 1 if you want to use DOS when using DOSTrainLoop'        
 
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
 
@@ -350,7 +350,6 @@ class DOSTrainLoop(BaseLoop):
                 batch = self.runner.model.data_preprocessor(data_batch, True)
                 input = batch['inputs']
                 label = batch['data_samples'][0].gt_label
-                print(label)
                 
                 self.v[label].append(self.runner.model.extract_feat(input)[0])
                 self.batch_idx[label].append(idx)
@@ -520,8 +519,7 @@ class CoSenTrainLoop(BaseLoop):
 
         # for CoSen
         from mmpretrain.models.classifiers import CoSenClassifier # this is not good style
-        if not isinstance(self.runner.model, CoSenClassifier):
-            raise TypeError('The model should be of type CoSenClassifier')
+        assert isinstance(self.runner.model, CoSenClassifier), 'The model should be of type CoSenClassifier when using CoSenTrainLoop'
 
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
         self.s_freq = s_freq
