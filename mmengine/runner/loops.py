@@ -854,13 +854,12 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             """
 
             print(pred)
-            print(labels)
             min_labels_mask = torch.tensor([label.item() in self.min_classes for label in labels])
             print(min_labels_mask)
             min_labels = labels[min_labels_mask]
             print(min_labels)
 
-            min_pred = pred[ : , min_labels ]
+            min_pred = pred[ min_labels_mask , min_labels ]
             print(min_pred)
 
             min_thrs_mask = min_pred < self.min_thrs
