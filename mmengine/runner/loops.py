@@ -854,10 +854,6 @@ class HardSamplingBasedTrainLoop(BaseLoop):
                     
 
             
-            pot_indices = torch.nonzero(pred_labels != labels).view((-1, ))
-            print(pot_indices)
-            for index in pot_indices:
-                if pred[index] <= self.min_thrs:
 
 
 
