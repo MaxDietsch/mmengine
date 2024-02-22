@@ -867,8 +867,10 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             indices = torch.nonzero(min_thrs_mask)
             print(indices)
 
-            flat_indices = indices[:, 0] * len(min_labels) + indices[:, 1]
-            print(flat_indices)
+            true_ind = torch.nonzero(min_labels_mask).view((-1, ))
+
+            batch_indices = [true_ind[ind] for ind in min_thrs_mask]
+            print(batch_indices)
             original_indices = idx * self.dataloader.batch_size + flat_indices
 
 
