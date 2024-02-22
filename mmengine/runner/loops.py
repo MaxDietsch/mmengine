@@ -802,6 +802,9 @@ class HardSamplingBasedTrainLoop(BaseLoop):
         # for Hard Sampling 
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
 
+        # minimal threshold, below is considered hard positive
+        self.min_thrs = 0.3
+
         # used to say which classes should be used for hard sampling
         self.min_classes = min_classes
 
@@ -841,9 +844,22 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             #print(pred)
             pred_labels = torch.argmax(pred, dim = 1)
             #print(pred_labels)
+
+
+            print(pred)
+            min_labels_mask = torch.tensor(label in self.min_classes for label in labels)
+            print(min_lables_mask)
+            ind = torch.nonzero(pred[ : , labels ] < self.min_thrs) & min_labels_mask.view(-1, 1)
+            print(ind)
+                    
+
             
             pot_indices = torch.nonzero(pred_labels != labels).view((-1, ))
             print(pot_indices)
+            for index in pot_indices:
+                if pred[index] <= self.min_thrs:
+
+
 
 
 
