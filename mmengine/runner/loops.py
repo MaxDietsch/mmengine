@@ -836,8 +836,9 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             data_samples = batch['data_samples']
             labels = torch.cat([i.gt_label for i in data_samples])
             pred = self.runner.model.predict(inputs)
-            print(pred[ : ])
-            print([i.pred_score for i in pred])
+            pred = [i.pred_score for i in pred]
+            print(pred)
+
 
 
 
@@ -851,7 +852,9 @@ class HardSamplingBasedTrainLoop(BaseLoop):
 
         while self._epoch < self._max_epochs and not self.stop_training:
             
-            self.mine_hard_samples()
+            # mine hard samples
+            with torch.no_grad(): 
+                self.mine_hard_samples()
 
             self.run_epoch()
             self._decide_current_val_interval()
