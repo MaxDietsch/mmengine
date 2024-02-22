@@ -842,7 +842,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             pred_labels = torch.argmax(pred, dim = 1)
             #print(pred_labels)
             
-            pot_indices = torch.nonzero(pred_labels != labels)
+            pot_indices = torch.nonzero(pred_labels != labels).view((-1, ))
             print(pot_indices)
 
 
