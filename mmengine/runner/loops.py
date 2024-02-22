@@ -869,7 +869,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
 
             flat_indices = indices[:, 0] * len(min_labels) + indices[:, 1]
             print(flat_indices)
-            original_indices = idx * batch_size + flat_indices
+            original_indices = idx * self.dataloader.batch_size + flat_indices
 
 
 
