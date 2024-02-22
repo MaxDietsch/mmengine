@@ -831,13 +831,18 @@ class HardSamplingBasedTrainLoop(BaseLoop):
 
     def mine_hard_samples(self):
         for idx, data_batch in enumerate(self.dataloader):
+            # get labels and predictions
             batch = self.runner.model.data_preprocessor(data_batch, True)
             inputs = batch['inputs']
             data_samples = batch['data_samples']
             labels = torch.cat([i.gt_label for i in data_samples])
             pred = self.runner.model.predict(inputs)
-            pred = [i.pred_score for i in pred]
+            pred = torch.cat([i.pred_score for i in pred])
             print(pred)
+            pred_labels = torch.argmax(pred, dim = 1)
+            print(pred_labels)
+
+
 
 
 
@@ -852,8 +857,9 @@ class HardSamplingBasedTrainLoop(BaseLoop):
 
         while self._epoch < self._max_epochs and not self.stop_training:
             
-            # mine hard samples
+            
             with torch.no_grad(): 
+                # mine hard samples
                 self.mine_hard_samples()
 
             self.run_epoch()
