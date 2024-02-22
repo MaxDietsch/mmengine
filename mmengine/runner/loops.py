@@ -806,7 +806,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
         self.min_thrs = 0.3
 
         # used to say which classes should be used for hard sampling
-        self.min_classes = min_classes
+        self.min_classes = set(min_classes)
 
         # safe hard samples, first dim is hard neg (0) or hard pos (1)
         # second dim is class of hard sample
@@ -844,17 +844,32 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             #print(pred)
             pred_labels = torch.argmax(pred, dim = 1)
             #print(pred_labels)
+            
 
+            """
+            for i, label in enumerate(labels):
+                if label in self.min_classes:
+                    if pred[i, label] < self.min_thrs:
+                        self.hard_samples[0, label].append(idx * self.dataloader.batch_size + i)
+            """
 
             print(pred)
-            min_labels_mask = torch.tensor([label in self.min_classes for label in labels], dtype=torch.int8)
+            min_labels_mask = torch.tensor([label in min_classes for label in labels])
             print(min_labels_mask)
-            print(torch.nonzero(pred[ : , labels ] < self.min_thrs))
-            ind = torch.nonzero(pred[ : , labels ] < self.min_thrs) & min_labels_mask.view(-1, 1)
-            print(ind)
-                    
+            min_labels = labels[min_labels_mask]
+            print(min_labels)
 
-            
+            min_pred = pred[ : , min_labels ]
+            print(min_pred)
+
+            min_thrs_mask = min_pred < self.min_thrs
+            print(min_thrs_mask)
+            indices = torch.nonzero(min_thrs_mask)
+            print(indices)
+
+            flat_indices = indices[:, 0] * len(min_labels) + indices[:, 1]
+            print(flat_indices)
+            original_indices = idx * batch_size + flat_indices
 
 
 
