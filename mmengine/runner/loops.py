@@ -837,7 +837,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             data_samples = batch['data_samples']
             labels = torch.cat([i.gt_label for i in data_samples])
             pred = self.runner.model.predict(inputs)
-            pred = torch.cat([i.pred_score for i in pred])
+            pred = torch.stack([i.pred_score for i in pred])
             print(pred)
             pred_labels = torch.argmax(pred, dim = 1)
             print(pred_labels)
