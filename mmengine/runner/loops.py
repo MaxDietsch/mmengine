@@ -872,7 +872,8 @@ class HardSamplingBasedTrainLoop(BaseLoop):
 
             batch_indices = [true_ind[ind] for ind in indices]
             print(batch_indices)
-            original_indices = idx * self.dataloader.batch_size + flat_indices
+            original_indices = [idx, batch_indices]
+
 
 
 
