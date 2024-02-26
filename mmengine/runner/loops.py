@@ -935,7 +935,6 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             # print(self.hard_samples)
 
 
-
     def run(self) -> torch.nn.Module:
         """Launch training."""
         self.runner.call_hook('before_train')
@@ -947,7 +946,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             with torch.no_grad(): 
                 # mine hard samples
                 self.mine_hard_samples()
-                print(self.hard_samples)
+                # print(self.hard_samples)
 
             self.run_epoch()
             self._decide_current_val_interval()
@@ -965,11 +964,14 @@ class HardSamplingBasedTrainLoop(BaseLoop):
         self.runner.call_hook('before_train_epoch')
         self.runner.model.train()
 
+        # first generate score for hard samples: 
         for idx, data_batch in enumerate(self.dataloader):
-            # only run iterations for classes that should be included 
-            # if data_batch['data_samples'][0].gt_label.item() in cls:
-                # self.run_iter(idx, data_batch)
-            #print(data_batch)
+            for i in range(2):
+                for j in range(self.num_classes):
+                    for k in range(self.k):
+                        if idx == self.hard_samples[i][j][k][1]:
+                            print(data_batch)
+        for idx, data_batch in enumerate(self.dataloader):
             self.run_iter(idx, data_batch)
 
         self.runner.call_hook('after_train_epoch')
