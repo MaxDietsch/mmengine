@@ -804,7 +804,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
 
         # minimal threshold, below is considered hard positive, conversely maximal threshold
         self.min_thrs = 0.3
-        self.max_thrs = 0.7
+        self.max_thrs = 0.2
 
         # used to say which classes should be used for hard sampling
         self.min_classes = set(min_classes)
@@ -880,7 +880,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
 
             # write hard negative samples into self.hard_samples
             for i, lab in enumerate(hard_neg_indices):
-                self.hard_samples[0][min_labels[lab]].append([idx, neg_batch_indices[i]])
+                self.hard_samples[0][min_labels[lab]].append([idx, neg_batch_ind[i]])
             print(self.hard_samples)
 
             
