@@ -853,26 +853,39 @@ class HardSamplingBasedTrainLoop(BaseLoop):
                         self.hard_samples[0, label].append(idx * self.dataloader.batch_size + i)
             """
 
-            print(pred)
+            # masks where the lables of min_classes are in the array-row
             min_labels_mask = torch.tensor([label.item() in self.min_classes for label in labels])
             print(min_labels_mask)
-            min_labels = labels[min_labels_mask]
-            print(min_labels)
 
-            min_pred = pred[ min_labels_mask , min_labels ]
-            print(min_pred)
-
-            min_thrs_mask = min_pred < self.min_thrs
-            print(min_thrs_mask)
-            indices = torch.nonzero(min_thrs_mask)
-            print(indices)
-
+            # get the indices in the batch of min_class samples
             true_ind = torch.nonzero(min_labels_mask).view((-1, ))
             print(true_ind)
 
+            # get the concrete labels of the min classes
+            min_labels = labels[min_labels_mask]
+            print(min_labels)
+
+            # get the prediction scores for min classes
+            min_pred = pred[ min_labels_mask , min_labels ]
+            print(min_pred)
+
+            # check if prediction scores are below a threshold
+            min_thrs_mask = min_pred < self.min_thrs
+            print(min_thrs_mask)
+
+            # get the indices where the prediction scores are below a threshold
+            indices = torch.nonzero(min_thrs_mask)
+            print(indices)
+            
+            # get only the indices in the batch which have prediction score lower than the threshold
             batch_indices = [true_ind[ind] for ind in indices]
             print(batch_indices)
+
+            # convert them into the original indices of the while dataset
             original_indices = [idx, batch_indices]
+            print(original_indices)
+
+            break
 
 
 
