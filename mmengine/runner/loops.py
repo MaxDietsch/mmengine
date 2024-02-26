@@ -756,6 +756,9 @@ class HardSamplingBasedTrainLoop(BaseLoop):
         max_epochs (int): Total training epochs.
         min_classes List(int): Determines the minority classes for the algorithm (only
             these will be used for mining hard samples, in the paper there is a criterion for that)
+        min_thrs (float): The threshold below which an sample is count as hard positive (can be 1 because of top-k mining)
+        max_thrs (float): The threshold above which an samples is count as hard negative (can be 0 since top-k mining)
+        k (int): The k in top-k mining (how many hard positives and negatives will be mined)
         val_begin (int): The epoch that begins validating.
             Defaults to 1.
         val_interval (int): Validation interval. Defaults to 1.
@@ -770,7 +773,10 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             runner,
             dataloader: Union[DataLoader, Dict],
             max_epochs: int,
-            min_classes: List[int], 
+            min_classes: List[int],
+            min_thrs: float,
+            max_thrs: float,
+            k: float, 
             val_begin: int = 1,
             val_interval: int = 1,
             dynamic_intervals: Optional[List[Tuple[int, int]]] = None) -> None:
@@ -805,14 +811,14 @@ class HardSamplingBasedTrainLoop(BaseLoop):
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
 
         # minimal threshold, below is considered hard positive, conversely maximal threshold
-        self.min_thrs = 0.3
-        self.max_thrs = 0.2
+        self.min_thrs = min_thrs
+        self.max_thrs = max_thrs
 
         # used to say which classes should be used for hard sampling
         self.min_classes = set(min_classes)
         
         # the k in top k mining 
-        self.k = 3
+        self.k = k
 
         # safe hard samples, first dim is hard neg (0) or hard pos (1)
         # second dim is class of hard sample
