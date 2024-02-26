@@ -879,8 +879,8 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             original_indices = [idx, batch_indices]
             print(original_indices)
 
-
-            self.hard_samples[1][labels].append(original_indices[i]) for i, labels in enumerate(min_lables)
+            for i, lab in enumerate(min_labels):
+                self.hard_samples[1][lab].append(original_indices[i])
             print(self.hard_samples)
 
 
