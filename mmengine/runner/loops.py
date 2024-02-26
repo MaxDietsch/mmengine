@@ -876,7 +876,8 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             print(hard_neg_ind)
 
             # get batch_indices of wrong prediction scores higher than the threshold
-            neg_batch_indices = [true_ind[ind] for ind in hard_neg_ind]
+            neg_batch_ind = [true_ind[ind] for ind in hard_neg_ind]
+            print(neg_batch_ind)
 
             # write hard negative samples into self.hard_samples
             for i, lab in enumerate(hard_neg_indices):
