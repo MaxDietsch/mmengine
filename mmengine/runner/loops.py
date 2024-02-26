@@ -858,7 +858,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             print(min_labels_mask)
 
             # get the indices in the batch of min_class samples
-            true_ind = torch.nonzero(min_labels_mask).view((-1, ))
+            true_ind = torch.nonzero(min_labels_mask).view((-1, )).to(torch.device("cuda"))
             print(true_ind)
 
             # get the concrete labels of the min classes
