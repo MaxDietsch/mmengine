@@ -921,7 +921,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             
             # write hard positives into self.hard_samples (need a max heap, -> minus before min_pred to convert to min_heap) 
             for i, lab in enumerate(hard_pos_ind):
-                if (len(self.hard_samples[1][min_labels[lab]]) >= self.k)  and  ( - min_pred[lab] > self.hard_samples[1][min_labels[lab][0][0]):
+                if (len(self.hard_samples[1][min_labels[lab]]) >= self.k)  and  ( - min_pred[lab] > self.hard_samples[1][min_labels[lab]][0][0]):
                     heapq.heappop(self.hard_samples[1][min_labels[lab]])
                     heapq.heappush(self.hard_samples[1][min_labels[lab]], [ - min_pred[lab], idx, pos_batch_ind[i]])
                 else:
