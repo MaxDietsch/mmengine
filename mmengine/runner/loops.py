@@ -892,7 +892,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
                 if (len(self.hard_samples[0][max_pred_lab[lab]]) >= self.k)  and  (max_pred[lab] > self.hard_samples[0][max_pred_lab[lab]][0][0]):
                     heapq.heappop(self.hard_samples[0][max_pred_lab[lab]])
                     heapq.heappush(self.hard_samples[0][max_pred_lab[lab]], [max_pred[lab], idx, neg_batch_ind[i]])
-                else:
+                elif len(self.hard_samples[0][max_pred_lab[lab]]) < self.k:
                     heapq.heappush(self.hard_samples[0][max_pred_lab[lab]], [max_pred[lab], idx, neg_batch_ind[i]])
             # print(self.hard_samples)
 
@@ -924,7 +924,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
                 if (len(self.hard_samples[1][min_labels[lab]]) >= self.k)  and  ( - min_pred[lab] > self.hard_samples[1][min_labels[lab]][0][0]):
                     heapq.heappop(self.hard_samples[1][min_labels[lab]])
                     heapq.heappush(self.hard_samples[1][min_labels[lab]], [ - min_pred[lab], idx, pos_batch_ind[i]])
-                else:
+                elif len(self.hard_samples[1][min_labels[lab]]) < self.k:
                     heapq.heappush(self.hard_samples[1][min_labels[lab]], [ - min_pred[lab], idx, pos_batch_ind[i]])
             # print(self.hard_samples)
 
