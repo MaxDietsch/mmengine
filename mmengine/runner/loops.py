@@ -858,7 +858,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             
             # get the concrete labels of the min classes
             min_labels = labels[min_labels_mask]
-            # print(min_labels)
+            print(min_labels)
 
             # get the label for which the maximum prediction was made and the maximum prediction score
             max_pred_lab = pred[ min_labels_mask ].argmax(dim=1) 
@@ -867,8 +867,8 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             print(max_pred)
             print(max_pred_lab)
             
-            # check if predictions are wrong and above the maximum threshold 
-            max_thrs_mask = max_pred_lab != min_labels and max_pred > self.max_thrs
+            # check if predictions are wrong and above the maximum threshold
+            max_thrs_mask = torch.logical_and(torch.ne(max_pred_lab, min_labels), torch.gt(max_pred, self.max_thrs))
             print(max_thrs_mask)
             
             # get indices where wrong prediction scores a above the threshold
