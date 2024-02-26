@@ -863,6 +863,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             # get the label for which the maximum prediction was made and the maximum prediction score
             max_pred_lab = pred[ min_labels_mask ].argmax(dim=1) 
             max_pred = pred[ min_labels_mask ].max(dim = 1)
+            print(pred)
             print(max_pred)
             print(max_pred_lab)
             
@@ -881,12 +882,6 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             for i, lab in enumerate(hard_neg_indices):
                 self.hard_samples[0][min_labels[lab]].append([idx, neg_batch_indices[i]])
             print(self.hard_samples)
-
-
-
-
-
-
 
             
             ### MINE HARD POSITIVES
