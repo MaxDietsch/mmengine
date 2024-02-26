@@ -880,7 +880,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             print(neg_batch_ind)
 
             # write hard negative samples into self.hard_samples
-            for i, lab in enumerate(hard_neg_indices):
+            for i, lab in enumerate(hard_neg_ind):
                 self.hard_samples[0][min_labels[lab]].append([idx, neg_batch_ind[i]])
             print(self.hard_samples)
 
