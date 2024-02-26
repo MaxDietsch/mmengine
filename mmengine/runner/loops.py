@@ -18,6 +18,8 @@ import numpy as np
 # only EpochBasedTrainLoop works with DynamicSampler
 from mmengine.dataset import DynamicSampler
 import torch.nn.functional as F
+import heapq
+
 
 
 @LOOPS.register_module()
@@ -811,6 +813,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
 
         # safe hard samples, first dim is hard neg (0) or hard pos (1)
         # second dim is class of hard sample
+        # for each class we have a min_heap and a max_heap so that only the top k samples for hard negative and hard positives are stored
         self.hard_samples = [[[] for _ in range(self.num_classes)] for _ in range(2)] #torch.empty((self.num_classes, ))
 
     @property
@@ -846,7 +849,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             pred_labels = torch.argmax(pred, dim = 1)
             #print(pred_labels)
 
-            ### MINE HARD NEGATIVES
+            ### MINE HARD SAMPLES
 
             # masks where the lables of min_classes are in the array-row
             min_labels_mask = torch.tensor([label.item() in self.min_classes for label in labels])
@@ -858,34 +861,42 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             
             # get the concrete labels of the min classes
             min_labels = labels[min_labels_mask]
-            print(min_labels)
+            # print(min_labels)
+
+
+            ## MINE HARD NEGATIVES
 
             # get the label for which the maximum prediction was made and the maximum prediction score
             max_pred_lab = pred[ min_labels_mask ].argmax(dim=1) 
             max_pred, max_pred_lab = pred[ min_labels_mask ].max(dim = 1)
-            print(pred)
-            print(max_pred)
-            print(max_pred_lab)
+            # print(max_pred)
+            # print(max_pred_lab)
             
             # check if predictions are wrong and above the maximum threshold
             max_thrs_mask = torch.logical_and(torch.ne(max_pred_lab, min_labels), torch.gt(max_pred, self.max_thrs))
-            print(max_thrs_mask)
+            # print(max_thrs_mask)
             
             # get indices where wrong prediction scores a above the threshold
             hard_neg_ind = torch.nonzero(max_thrs_mask)
-            print(hard_neg_ind)
+            # print(hard_neg_ind)
 
             # get batch_indices of wrong prediction scores higher than the threshold
             neg_batch_ind = [true_ind[ind] for ind in hard_neg_ind]
-            print(neg_batch_ind)
+            # print(neg_batch_ind)
 
             # write hard negative samples into self.hard_samples
             for i, lab in enumerate(hard_neg_ind):
-                self.hard_samples[0][max_pred_lab[lab]].append([idx, neg_batch_ind[i]])
+                if (len(self.hard_samples[0][max_pred_lab[lab]) >= 3)  and  (max_pred[lab] > self.hard_samples[0][max_pred_lab[lab]][0]):
+                    heapq.heappop(self.hard_samples[0][max_pred_lab[lab])
+                    heapq.heappush(self.hard_samples[0][max_pred_lab[lab], [max_pred[lab], idx, neg_batch_ind[i]])
+                else:
+                    heapq.heappush(self.hard_samples[0][max_pred_lab[lab], [max_pred[lab], idx, neg_batch_ind[i]])
+
+
             print(self.hard_samples)
 
             
-            ### MINE HARD POSITIVES
+            ## MINE HARD POSITIVES
             
             # get the prediction scores for min classes
             min_pred = pred[ min_labels_mask , min_labels ]
@@ -911,16 +922,6 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             for i, lab in enumerate(hard_pos_ind):
                 self.hard_samples[1][min_labels[lab]].append([idx, pos_batch_ind[i]])
             # print(self.hard_samples)
-
-
-
-
-
-
-
-
-
-
 
 
 
