@@ -810,6 +810,9 @@ class HardSamplingBasedTrainLoop(BaseLoop):
 
         # used to say which classes should be used for hard sampling
         self.min_classes = set(min_classes)
+        
+        # the k in top k mining 
+        self.k = 3
 
         # safe hard samples, first dim is hard neg (0) or hard pos (1)
         # second dim is class of hard sample
@@ -884,16 +887,14 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             neg_batch_ind = [true_ind[ind] for ind in hard_neg_ind]
             # print(neg_batch_ind)
 
-            # write hard negative samples into self.hard_samples
+            # write hard negative samples into self.hard_samples (need a min heap)
             for i, lab in enumerate(hard_neg_ind):
-                if (len(self.hard_samples[0][max_pred_lab[lab]]) >= 3)  and  (max_pred[lab] > self.hard_samples[0][max_pred_lab[lab]][0][0]):
+                if (len(self.hard_samples[0][max_pred_lab[lab]]) >= self.k)  and  (max_pred[lab] > self.hard_samples[0][max_pred_lab[lab]][0][0]):
                     heapq.heappop(self.hard_samples[0][max_pred_lab[lab]])
                     heapq.heappush(self.hard_samples[0][max_pred_lab[lab]], [max_pred[lab], idx, neg_batch_ind[i]])
                 else:
                     heapq.heappush(self.hard_samples[0][max_pred_lab[lab]], [max_pred[lab], idx, neg_batch_ind[i]])
-
-
-            print(self.hard_samples)
+            # print(self.hard_samples)
 
             
             ## MINE HARD POSITIVES
@@ -918,9 +919,13 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             #original_indices = [idx, batch_indices]
             #print(original_indices)
             
-            # write hard positives into self.hard_samples 
+            # write hard positives into self.hard_samples (need a max heap, -> minus before min_pred to convert to min_heap) 
             for i, lab in enumerate(hard_pos_ind):
-                self.hard_samples[1][min_labels[lab]].append([idx, pos_batch_ind[i]])
+                if (len(self.hard_samples[1][min_labels[lab]]) >= self.k)  and  ( - min_pred[lab] > self.hard_samples[1][min_labels[lab][0][0]):
+                    heapq.heappop(self.hard_samples[1][min_labels[lab]])
+                    heapq.heappush(self.hard_samples[1][min_labels[lab]], [ - min_pred[lab], idx, pos_batch_ind[i]])
+                else:
+                    heapq.heappush(self.hard_samples[1][min_labels[lab]], [ - min_pred[lab], idx, pos_batch_ind[i]])
             # print(self.hard_samples)
 
 
@@ -936,6 +941,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             with torch.no_grad(): 
                 # mine hard samples
                 self.mine_hard_samples()
+                print(self.hard_samples)
 
             self.run_epoch()
             self._decide_current_val_interval()
