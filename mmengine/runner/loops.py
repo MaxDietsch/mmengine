@@ -881,24 +881,12 @@ class HardSamplingBasedTrainLoop(BaseLoop):
 
             # write hard negative samples into self.hard_samples
             for i, lab in enumerate(hard_neg_ind):
-                self.hard_samples[0][min_labels[lab]].append([idx, neg_batch_ind[i]])
+                self.hard_samples[0][max_pred_lab[lab]].append([idx, neg_batch_ind[i]])
             print(self.hard_samples)
 
             
             ### MINE HARD POSITIVES
             
-            # masks where the lables of min_classes are in the array-row
-            min_labels_mask = torch.tensor([label.item() in self.min_classes for label in labels])
-            # print(min_labels_mask)
-
-            # get the indices in the batch of min_class samples
-            true_ind = torch.nonzero(min_labels_mask).view((-1, )).to(torch.device("cuda"))
-            # print(true_ind)
-
-            # get the concrete labels of the min classes
-            min_labels = labels[min_labels_mask]
-            # print(min_labels)
-
             # get the prediction scores for min classes
             min_pred = pred[ min_labels_mask , min_labels ]
             # print(min_pred)
@@ -908,11 +896,11 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             # print(min_thrs_mask)
 
             # get the indices where the prediction scores are below a threshold
-            indices = torch.nonzero(min_thrs_mask)
+            hard_pos_ind = torch.nonzero(min_thrs_mask)
             # print(indices)
             
             # get only the indices in the batch which have prediction score lower than the threshold
-            batch_indices = [true_ind[ind] for ind in indices]
+            pos_batch_ind = [true_ind[ind] for ind in hard_pos_ind]
             # print(batch_indices)
 
             # convert them into the original indices of the while dataset
@@ -920,8 +908,8 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             #print(original_indices)
             
             # write hard positives into self.hard_samples 
-            for i, lab in enumerate(indices):
-                self.hard_samples[1][min_labels[lab]].append([idx, batch_indices[i]])
+            for i, lab in enumerate(hard_pos_ind):
+                self.hard_samples[1][min_labels[lab]].append([idx, pos_batch_ind[i]])
             # print(self.hard_samples)
 
 
