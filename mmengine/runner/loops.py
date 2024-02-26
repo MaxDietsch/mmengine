@@ -862,7 +862,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
 
             # get the label for which the maximum prediction was made and the maximum prediction score
             max_pred_lab = pred[ min_labels_mask ].argmax(dim=1) 
-            max_pred = pred[ min_labels_mask ].max(dim = 1)
+            max_pred, max_pred_lab = pred[ min_labels_mask ].max(dim = 1)
             print(pred)
             print(max_pred)
             print(max_pred_lab)
