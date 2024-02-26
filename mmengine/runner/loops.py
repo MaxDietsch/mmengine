@@ -887,7 +887,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             # write hard negative samples into self.hard_samples
             for i, lab in enumerate(hard_neg_ind):
                 if (len(self.hard_samples[0][max_pred_lab[lab]]) >= 3)  and  (max_pred[lab] > self.hard_samples[0][max_pred_lab[lab]][0]):
-                    heapq.heappop(self.hard_samples[0][max_pred_lab[lab])
+                    heapq.heappop(self.hard_samples[0][max_pred_lab[lab]])
                     heapq.heappush(self.hard_samples[0][max_pred_lab[lab], [max_pred[lab], idx, neg_batch_ind[i]])
                 else:
                     heapq.heappush(self.hard_samples[0][max_pred_lab[lab], [max_pred[lab], idx, neg_batch_ind[i]])
