@@ -968,8 +968,8 @@ class HardSamplingBasedTrainLoop(BaseLoop):
         for idx, data_batch in enumerate(self.dataloader):
             for i in range(2):
                 for j in range(self.num_classes):
-                    for k in range(self.k):
-                        if idx == self.hard_samples[i][j][k][1]:
+                    for k in self.hard_samples[i][j]:
+                        if idx == k[1]:
                             print(data_batch)
         for idx, data_batch in enumerate(self.dataloader):
             self.run_iter(idx, data_batch)
