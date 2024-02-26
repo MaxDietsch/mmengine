@@ -802,8 +802,9 @@ class HardSamplingBasedTrainLoop(BaseLoop):
         # for Hard Sampling 
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
 
-        # minimal threshold, below is considered hard positive
+        # minimal threshold, below is considered hard positive, conversely maximal threshold
         self.min_thrs = 0.3
+        self.max_thrs = 0.7
 
         # used to say which classes should be used for hard sampling
         self.min_classes = set(min_classes)
@@ -844,6 +845,49 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             #print(pred)
             pred_labels = torch.argmax(pred, dim = 1)
             #print(pred_labels)
+
+            ### MINE HARD NEGATIVES
+
+            # masks where the lables of min_classes are in the array-row
+            min_labels_mask = torch.tensor([label.item() in self.min_classes for label in labels])
+            # print(min_labels_mask)
+
+            # get the indices in the batch of min_class samples
+            true_ind = torch.nonzero(min_labels_mask).view((-1, )).to(torch.device("cuda"))
+            # print(true_ind)
+            
+            # get the concrete labels of the min classes
+            min_labels = labels[min_labels_mask]
+            # print(min_labels)
+
+            # get the label for which the maximum prediction was made and the maximum prediction score
+            max_pred_lab = pred[ min_labels_mask ].argmax(dim=1) 
+            max_pred = pred[ min_labels_mask ].max(dim = 1)
+            print(max_pred)
+            print(max_pred_lab)
+            
+            # check if predictions are wrong and above the maximum threshold 
+            max_thrs_mask = max_pred_lab != min_labels and max_pred > self.max_thrs
+            print(max_thrs_mask)
+            
+            # get indices where wrong prediction scores a above the threshold
+            hard_neg_ind = torch.nonzero(max_thrs_mask)
+            print(hard_neg_ind)
+
+            # get batch_indices of wrong prediction scores higher than the threshold
+            neg_batch_indices = [true_ind[ind] for ind in hard_neg_ind]
+
+            # write hard negative samples into self.hard_samples
+            for i, lab in enumerate(hard_neg_indices):
+                self.hard_samples[0][min_labels[lab]].append([idx, neg_batch_indices[i]])
+            print(self.hard_samples)
+
+
+
+
+
+
+
             
             ### MINE HARD POSITIVES
             
@@ -857,7 +901,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
 
             # get the concrete labels of the min classes
             min_labels = labels[min_labels_mask]
-            print(min_labels)
+            # print(min_labels)
 
             # get the prediction scores for min classes
             min_pred = pred[ min_labels_mask , min_labels ]
@@ -876,12 +920,13 @@ class HardSamplingBasedTrainLoop(BaseLoop):
             # print(batch_indices)
 
             # convert them into the original indices of the while dataset
-            original_indices = [idx, batch_indices]
-            print(original_indices)
-
+            #original_indices = [idx, batch_indices]
+            #print(original_indices)
+            
+            # write hard positives into self.hard_samples 
             for i, lab in enumerate(indices):
                 self.hard_samples[1][min_labels[lab]].append([idx, batch_indices[i]])
-            print(self.hard_samples)
+            # print(self.hard_samples)
 
 
 
