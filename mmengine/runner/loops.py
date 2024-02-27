@@ -973,9 +973,11 @@ class HardSamplingBasedTrainLoop(BaseLoop):
                             print(data_batch)
                             print(data_batch['inputs'][k[2].cpu()])
                             
-                            batch = {key: value[k[2].cpu()] for key, value in data_batch.items()}
-                            print(batch)
-                            input = self.runner.model.data_preprocessor(batch, True)
+                            data_batch['data_samples'] = [] 
+                            data_batch['inputs'] = data_batch['inputs'][k[2].cpu()]
+
+                            print(data_batch)
+                            input = self.runner.model.data_preprocessor(data_batch, True)
                             print(input)
                             out = self.runner.model.predict(input)
                             print(out)
