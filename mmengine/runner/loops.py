@@ -978,11 +978,12 @@ class HardSamplingBasedTrainLoop(BaseLoop):
 
                             # print(data_batch)
                             data_batch = self.runner.model.data_preprocessor(data_batch, True)
-                            print(data_batch)
+                            # print(data_batch)
                             out = self.runner.model.predict(data_batch['inputs'])
-                            print(out)
+                            # print(out)
 
-                            print("*" * 1000 )
+                            # print("*" * 1000 )
+        print('finished)')
 
 
 
