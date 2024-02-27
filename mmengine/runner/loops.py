@@ -975,7 +975,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
                             print(k[2].cpu())
                             
                             data_batch['data_samples'] = None 
-                            data_batch['inputs'] = data_batch['inputs'][1].unsqueeze(0)
+                            data_batch['inputs'] = data_batch['inputs'][0].unsqueeze(0)
 
                             print(data_batch)
                             data_batch = self.runner.model.data_preprocessor(data_batch, True)
