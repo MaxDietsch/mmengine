@@ -976,7 +976,8 @@ class HardSamplingBasedTrainLoop(BaseLoop):
                         if idx == k[1]:
                             # print(data_batch)
                             # print(data_batch['inputs'][k[2].cpu()])
-                            
+
+                            batch = {}
                             batch['data_samples'] = None 
                             batch['inputs'] = data_batch['inputs'][k[2].item()].unsqueeze(0)
                             #print(data_batch)
