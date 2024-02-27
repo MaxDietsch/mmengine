@@ -820,7 +820,10 @@ class HardSamplingBasedTrainLoop(BaseLoop):
         # the k in top k mining 
         self.k = k
 
-        # safe hard samples, first dim is hard neg (0) or hard pos (1)
+        # store the output tensor of the hard samples, but not the position like in self.hard_samples
+        self.out = torch.zeros(2, self.num_classes, self.k, self.num_classes)
+
+        # safe position of hard samples, first dim is hard neg (0) or hard pos (1)
         # second dim is class of hard sample
         # for each class we have a min_heap and a max_heap so that only the top k samples for hard negative and hard positives are stored
         self.hard_samples = [[[] for _ in range(self.num_classes)] for _ in range(2)] #torch.empty((self.num_classes, ))
@@ -847,6 +850,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
 
     def mine_hard_samples(self):
         for idx, data_batch in enumerate(self.dataloader):
+
             # get labels and predictions
             batch = self.runner.model.data_preprocessor(data_batch, True)
             inputs = batch['inputs']
@@ -968,27 +972,29 @@ class HardSamplingBasedTrainLoop(BaseLoop):
         for idx, data_batch in enumerate(self.dataloader):
             for i in range(2):
                 for j in range(self.num_classes):
-                    for k in self.hard_samples[i][j]:
+                    for l, k in enumerate(self.hard_samples[i][j]):
                         if idx == k[1]:
                             # print(data_batch)
                             # print(data_batch['inputs'][k[2].cpu()])
                             
                             data_batch['data_samples'] = None 
-                            data_batch['inputs'] = data_batch['inputs'][k[2].cpu()]#.unsqueeze(0)
+                            data_batch['inputs'] = data_batch['inputs'][k[2].item()]#.unsqueeze(0)
+                            #print(data_batch)
 
-                            print(data_batch)
                             data_batch = self.runner.model.data_preprocessor(data_batch, True)
                             # print(data_batch)
                             out = self.runner.model.predict(data_batch['inputs'])
-                            # print(out)
+                            print(out)
+                            self.out[i, j, l] = [1,1,1,1]
+                            print(self.out)
 
-                            # print("*" * 1000 )
-        print('finished)')
 
 
 
 
         for idx, data_batch in enumerate(self.dataloader):
+
+
             self.run_iter(idx, data_batch)
 
         self.runner.call_hook('after_train_epoch')
