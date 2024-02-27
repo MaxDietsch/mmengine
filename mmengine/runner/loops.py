@@ -971,8 +971,13 @@ class HardSamplingBasedTrainLoop(BaseLoop):
                     for k in self.hard_samples[i][j]:
                         if idx == k[1]:
                             print(data_batch)
-                            print("" * 1000)
                             print(data_batch['inputs'][k[2].cpu()])
+                            input = data_batch['inputs'][k[2].cpu()] 
+                            out = self.runner.model.predict(input)
+                            print(out)
+
+                            print("*" * 1000 )
+
 
 
 
