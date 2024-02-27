@@ -972,7 +972,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
                         if idx == k[1]:
                             print(data_batch)
                             print(data_batch['inputs'][k[2].cpu()])
-                            input = data_batch['inputs'][k[2].cpu()].sqeeze()
+                            input = data_batch['inputs'][k[2].cpu()].squeeze()
                             input = self.runner.model.data_preprocessor(input, True) 
                             out = self.runner.model.predict(input)
                             print(out)
