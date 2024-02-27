@@ -847,7 +847,8 @@ class HardSamplingBasedTrainLoop(BaseLoop):
     def iter(self):
         """int: Current iteration."""
         return self._iter
-
+    
+    """
     def mine_hard_samples(self):
         for idx, data_batch in enumerate(self.dataloader):
 
@@ -937,7 +938,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
                 elif len(self.hard_samples[1][min_labels[lab]]) < self.k:
                     heapq.heappush(self.hard_samples[1][min_labels[lab]], [ - min_pred[lab], idx, pos_batch_ind[i]])
             # print(self.hard_samples)
-
+        """
 
     def run(self) -> torch.nn.Module:
         """Launch training."""
@@ -946,11 +947,12 @@ class HardSamplingBasedTrainLoop(BaseLoop):
 
         while self._epoch < self._max_epochs and not self.stop_training:
             
-            
+            """
             with torch.no_grad(): 
                 # mine hard samples
                 self.mine_hard_samples()
                 # print(self.hard_samples)
+            """
 
             self.run_epoch()
             self._decide_current_val_interval()
@@ -967,7 +969,9 @@ class HardSamplingBasedTrainLoop(BaseLoop):
         """Iterate one epoch."""
         self.runner.call_hook('before_train_epoch')
         self.runner.model.train()
+        
 
+        """
         # first generate score for hard samples: 
         for idx, data_batch in enumerate(self.dataloader):
             for i in range(2):
@@ -988,6 +992,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
                             print(out)
                             self.out[i, j, l] = out[0].pred_score
                             print(self.out)
+        """
 
 
 
