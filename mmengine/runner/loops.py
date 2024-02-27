@@ -972,7 +972,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
                         if idx == k[1]:
                             print(data_batch)
                             print("" * 1000)
-                            print(data_batch['inputs'])[k[2]]
+                            print(data_batch['inputs'][k[2]])
 
 
 
