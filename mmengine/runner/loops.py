@@ -985,7 +985,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
                             # print(data_batch)
                             out = self.runner.model.predict(data_batch['inputs'])
                             print(out)
-                            self.out[i, j, l] = [1,1,1,1]
+                            self.out[i, j, l] = out['pred_score']
                             print(self.out)
 
 
