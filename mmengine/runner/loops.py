@@ -971,6 +971,11 @@ class HardSamplingBasedTrainLoop(BaseLoop):
                     for k in self.hard_samples[i][j]:
                         if idx == k[1]:
                             print(data_batch)
+                            print("" * 1000)
+                            print(data_batch['inputs'])[k[2]]
+
+
+
         for idx, data_batch in enumerate(self.dataloader):
             self.run_iter(idx, data_batch)
 
