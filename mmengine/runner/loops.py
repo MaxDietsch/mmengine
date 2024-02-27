@@ -973,7 +973,7 @@ class HardSamplingBasedTrainLoop(BaseLoop):
                             print(data_batch)
                             print(data_batch['inputs'][k[2].cpu()])
                             
-                            data_batch['data_samples'] = [] 
+                            data_batch['data_samples'] = None 
                             data_batch['inputs'] = data_batch['inputs'][k[2].cpu()]
 
                             print(data_batch)
