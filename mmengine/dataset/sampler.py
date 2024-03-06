@@ -337,7 +337,8 @@ class ROSSampler(Sampler):
         print(f"current distribution of samples from the dataset is : {counts}")
 
         # deterministically shuffle based on epoch and seed
-        print(f'indices before shuffle: {indices}')
+        #print(f'indices before shuffle: {indices}')
+        print(f'length of indices: {len(indices)}')
         if self.shuffle:
             indices = torch.tensor(indices)
             g = torch.Generator()
@@ -368,7 +369,8 @@ class ROSSampler(Sampler):
 
         # subsample
         indices = indices[self.rank:self.total_size:self.world_size]
-        print(f'indices after rank, world_size... : {indices}')
+        #print(f'indices after rank, world_size... : {indices}')
+        print(f'new length of indices: {len(indices)}')
         return iter(indices)
 
     def __len__(self) -> int:
