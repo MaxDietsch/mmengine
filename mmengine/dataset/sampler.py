@@ -337,8 +337,8 @@ class ROSSampler(Sampler):
         print(f"current distribution of samples from the dataset is : {counts}")
 
         # deterministically shuffle based on epoch and seed
-        print(f'indices before shuffle: {indices}')
-        print(f'length of indices: {len(indices)}')
+        #print(f'indices before shuffle: {indices}')
+        #print(f'length of indices: {len(indices)}')
         if self.shuffle:
             indices = torch.tensor(indices)
             g = torch.Generator()
@@ -370,7 +370,7 @@ class ROSSampler(Sampler):
         # subsample
         indices = indices[self.rank:self.total_size:self.world_size]
         #print(f'indices after rank, world_size... : {indices}')
-        print(f'new length of indices: {len(indices)}')
+        #print(f'new length of indices: {len(indices)}')
         return iter(indices)
 
     def __len__(self) -> int:
@@ -421,9 +421,25 @@ class RUSSampler(Sampler):
         self.num_classes = num_classes
         self.rus_pct = rus_pct
         self.ros_min_pct = ros_min_pct
-        self.label_counts = np.full(self.num_classes, 0)
         data_list = self.dataset.load_data_list()
+
+        self.labels = torch.tensor([item['gt_label'] for item in data_list])
+        
+        self.label_counts = torch.bincount(self.labels, minlength = self.num_classes)
+        # print(f'label counts: {self.label_counts}')
+
+        # calculate how often a sample needs to be duplicated for each class
+        self.factors = torch.round(self.label_counts.min() * self.rus_pct * self.ros_min_pct / self.label_counts, decimals = 2)
+
+        # correctly set the number of samples of the majority class
+        self.factors[torch.argmin(self.label_counts)] = 1 * self.ros_maj_pct
+        # print(f'factors: {self.factors}')
+
+        """
+        # numpy: 
+        self.label_counts = np.full(self.num_classes, 0)
         self.labels = [item['gt_label'] for item in data_list]
+
         for item in data_list:
             self.label_counts[item['gt_label']] += 1
 
@@ -432,6 +448,7 @@ class RUSSampler(Sampler):
         
         # correctly set the number of samples of the minority class
         self.factors[np.argmin(self.label_counts)] = 1 * self.ros_min_pct
+        """
 
         if self.round_up:
             self.num_samples = math.ceil(len(self.dataset) / world_size)
@@ -446,6 +463,29 @@ class RUSSampler(Sampler):
 
         # get indices of elements which should be included in training
         indices = []
+        
+        for idx, label in enumerate(self.labels):
+            # Probability part of the factor
+            prob = self.factors[label] - int(self.factors[label])  
+            # Determine replications based on probability
+            replications = int(torch.ceil(self.factors[label]) if torch.rand(1) < prob else torch.floor(self.factors[label]))
+            # Add index 'replications' times
+            indices.extend([idx] * replications)
+            counts[label] += replications 
+
+        print(f"current distribution of samples from the dataset is : {counts}")
+
+        # deterministically shuffle based on epoch and seed
+        #print(f'indices before shuffle: {indices}')
+        #print(f'length of indices: {len(indices)}')
+        if self.shuffle:
+            indices = torch.tensor(indices)
+            g = torch.Generator()
+            g.manual_seed(self.seed + self.epoch)
+            indices = indices[torch.randperm(indices.size(0), generator=g)].tolist()
+
+        # numpy:
+        """
         counts = [0] * self.num_classes
         for idx, label in enumerate(self.labels):
             prob = self.factors[label] - int(self.factors[label])
@@ -459,7 +499,8 @@ class RUSSampler(Sampler):
             indices = np.array(indices)
             np.random.seed(self.seed + self.epoch)
             np.random.shuffle(indices)
-        
+        """
+
         # update num_samples and total_size for correct printed output of train process
         self.num_samples = math.ceil((len(indices) - self.rank) / self.world_size)
         self.total_size = self.num_samples * self.world_size
