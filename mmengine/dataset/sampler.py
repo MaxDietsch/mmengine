@@ -271,13 +271,29 @@ class ROSSampler(Sampler):
         self.seed = seed
         self.epoch = 0
         self.round_up = round_up
-
+        
+        # for ROS
         # get the initial count of each class
         self.num_classes = num_classes
         self.ros_pct = ros_pct
         self.rus_maj_pct = rus_maj_pct
-        self.label_counts = np.full(self.num_classes, 0)
         data_list = self.dataset.load_data_list()
+
+        self.labels = torch.tensor([item['gt_label'] for item in data_list])
+
+        self.label_counts = torch.bincount(self.labels, minlength = self.num_classes)
+        print(f'label counts: {self.label_counts}')
+
+        # calculate how often a sample needs to be duplicated for each class
+        self.factors = torch.round(self.label_counts.max() * self.ros_pct * self.rus_maj_pct / self.label_counts, decimals = 2)
+
+        # correctly set the number of samples of the majority class
+        self.factors[torch.argmax(self.label_counts)] = 1 * self.rus_maj_pct
+        print(f'factors: {self.factors}')
+
+        """
+        # numpy:
+        self.label_counts = np.full(self.num_classes, 0)
         self.labels = [item['gt_label'] for item in data_list]
         for item in data_list:
             self.label_counts[item['gt_label']] += 1
@@ -287,6 +303,7 @@ class ROSSampler(Sampler):
         
         # correctly set the number of samples of the majority class
         self.factors[np.argmax(self.label_counts)] = 1 * self.rus_maj_pct
+        """
 
         if self.round_up:
             self.num_samples = math.ceil(len(self.dataset) / world_size)
@@ -296,25 +313,52 @@ class ROSSampler(Sampler):
                 (len(self.dataset) - rank) / world_size)
             self.total_size = len(self.dataset)
 
+        print(f'wolrd_size: {world_size}')
+        print(f'rank: {rank}')
+        print(f'num samples: {self.num_samples}')
+        print(f'total size: {self.total_size}')
+
     def __iter__(self) -> Iterator[int]:
         """Iterate the indices."""
 
         # get indices of elements which should be included in training
         indices = []
+        counts = torch.zeros(self.num_classes, dtype=torch.int32)
+
+        for idx, label in enumerate(self.labels):
+            # Probability part of the factor
+            prob = self.factors[label] - int(self.factors[label])  
+            # Determine replications based on probability
+            replications = int(torch.ceil(self.factors[label]) if torch.rand(1) < prob else torch.floor(self_factors[label]))
+            # Add index 'replications' times
+            indices.extend([idx] * replications)
+            counts[label] += replications 
+
+        print(f"current distribution of samples from the dataset is : {counts}")
+
+        # deterministically shuffle based on epoch and seed
+        if self.shuffle:
+            g = torch.Generator()
+            g.manual_seed(self.seed + self.epoch)
+            indices = indices[torch.randperm(indices.size(0), generator=g)].tolist()
+        print(f'indices: {indices}')
+
+        # numpy
+        """
         counts = [0] * self.num_classes
         for idx, label in enumerate(self.labels):
             prob = self.factors[label] - int(self.factors[label])
             replications =  int((np.ceil(self.factors[label]) if np.random.rand() < prob else np.floor(self.factors[label]))) 
             indices += [idx] * replications
             counts[label] += replications
-        print(f"current distribution of samples from the dataset is : {counts}")
 
         # deterministically shuffle based on epoch and seed
         if self.shuffle:
             indices = np.array(indices)
             np.random.seed(self.seed + self.epoch)
             np.random.shuffle(indices)
-        
+        """
+
         # update num_samples and total_size for correct printed output of train process
         self.num_samples = math.ceil((len(indices) - self.rank) / self.world_size)
         self.total_size = self.num_samples * self.world_size
@@ -323,6 +367,7 @@ class ROSSampler(Sampler):
 
         # subsample
         indices = indices[self.rank:self.total_size:self.world_size]
+        print(f'indices after rank, world_size... : {indices}')
         return iter(indices)
 
     def __len__(self) -> int:
