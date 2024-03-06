@@ -191,7 +191,7 @@ class DynamicSampler(Sampler):
         for class_idx in range(self.num_classes):
             # Find indices where labels match the current class index
             class_indices = (self.labels == class_idx).nonzero().squeeze()
-            self.label_indices[class_idx] = class_indices
+            self.label_indices[class_idx] = class_indices.float()
         #print(f'label_indices: {self.label_indices}')
         
         # numpy: 
