@@ -144,11 +144,16 @@ class DOSSampler(DefaultSampler):
 # like DefaultSampler above but DynamicSampler which is capable of ROS
 @DATA_SAMPLERS.register_module()
 class DynamicSampler(Sampler):
-    # num_classes should be the number of classes 
+    """ implements dynamic sampling like stated in the paper: 
+        Dynamic Sampling in Convolutional Neural Networks for Imbalanced Data Classification by Pouyanfar et al.
+
+        Args: 
+            enable_ROS (bool): if set to true then oversampling is applied if samples_size is greater 
+                        than the actual samples of that class
+    """
 
     def __init__(self,
                  dataset: Sized,
-                 num_classes: int,
                  enable_ROS: bool = False, 
                  shuffle: bool = True,
                  seed: Optional[int] = None,
@@ -165,31 +170,79 @@ class DynamicSampler(Sampler):
         self.epoch = 0
         self.round_up = round_up
 
+        # for Dynamic Sampling
+        # if set to true then oversampling is applied if samples_size is greater than the actual samples of that class
         self.enable_ROS = enable_ROS
 
         # get the label of each element in the dataset
         data_list = self.dataset.load_data_list()
-        self.labels = [item['gt_label'] for item in data_list]
+        self.labels = torch.tensor([item['gt_label'] for item in data_list])
+        #numpy: self.labels = [item['gt_label'] for item in data_list]
 
         # initialize sample_size like in the paper
-        self.num_classes = num_classes
+        self.num_classes = len(self.dataset.metainfo['classes'])
         self.average_sample_size = len(self.labels) // self.num_classes
-        self.sample_size = np.full(self.num_classes, self.average_sample_size)
+        self.sample_size = torch.full((self.num_classes, ), self.average_sample_size, dtype = torch.int)
+        # numpy: self.sample_size = np.full(self.num_classes, self.average_sample_size)
 
         # get indices of specific labels
+       
+        self.label_indices = [torch.tensor([], dtype=torch.int) for _ in range(self.num_classes)]
+        for class_idx in range(self.num_classes):
+            # Find indices where labels match the current class index
+            class_indices = (self.labels == class_idx).nonzero().squeeze()
+            self.label_indices[class_idx] = class_indices
+        print(f'label_indices: {self.label_indices}')
+        
+        # numpy: 
+        """
         self.label_indices = [[] for _ in range(0, self.num_classes)]
         for idx, label in enumerate(self.labels):
             self.label_indices[label].append(idx)
+        """
 
         # check if this is necessary, i think not, but normally it has to be done
-        self.num_samples = math.ceil((np.sum(self.sample_size) - self.rank) / self.world_size)
+        self.num_samples = math.ceil((torch.sum(self.sample_size) - self.rank) / self.world_size)
         self.total_size = self.num_samples * self.world_size
 
     def __iter__(self) -> Iterator[int]:
         """Iterate the indices."""
 
         # get indices of elements which should be included in training 
-        counts = [0] * self.num_classes
+        counts = torch.zeros(self.num_classes, dtype = torch.int)
+        indices = torch.empty(self.sample_size.sum(), dtype=torch.long)
+
+        if self.enable_ROS:
+            for label in range(0, self.num_classes): 
+                num_samples = int(self_sample_size[label])
+                end_idx = start_idx + num_samples
+                if num_samples > 0 and len(self.label_indices.[label]) > 0:
+                    sampled_indices = self_label_indices[label][torch.multinomial(self_label_indices[label], num_samples, replacement=True)]
+                    indices[start_idx:end_idx] = sampled_indices
+                    counts[label] += num_samples
+                start_idx = end_idx
+        else: 
+            for label in range(0, self.num_classes): 
+                num_samples = int(self_sample_size[label])
+                end_idx = start_idx + num_samples
+                if num_samples > 0 and len(self.label_indices.[label]) > 0:
+                    sampled_indices = self_label_indices[label][torch.multinomial(self_label_indices[label], min(num_samples, len(self.label_indices[label])), replacement=True)]
+                    indices[start_idx:end_idx] = sampled_indices
+                    counts[label] += num_samples
+                start_idx = end_idx
+
+        print(f"current distribution of samples from the dataset is : {counts}")
+        print(f'current samples size is: {self.sample_size}')
+
+        # deterministically shuffle based on epoch and seed
+        if self.shuffle:
+            g = torch.Generator()
+            g.manual_seed(self.seed + self.epoch)
+            indices = indices[torch.randperm(indices.size(0), generator=g)].tolist()
+
+        # numpy:
+        """
+        counts = [0] * self.num_classes 
         indices = []
         if self.enable_ROS:
             for label in range (0, self.num_classes):
@@ -206,13 +259,12 @@ class DynamicSampler(Sampler):
             #   if counts[label] <= self.sample_size[label]:
             #      indices.append(idx)
             #     counts[label] += 1
-        print(f"current distribution of samples from the dataset is : {counts}")
 
-        # deterministically shuffle based on epoch and seed
         if self.shuffle:
             indices = np.array(indices)
             np.random.seed(self.seed + self.epoch)
             np.random.shuffle(indices)
+        """
         
         # update num_samples and total_size for correct printed output of train process
         self.num_samples = math.ceil((len(indices) - self.rank) / self.world_size)
@@ -241,20 +293,23 @@ class DynamicSampler(Sampler):
         self.epoch = epoch
     
     # dynamically set the class sizes based on f1-scores 
-    def update_sample_size(self, f1_scores: List[float]) -> None:
-        self.sample_size = (1 - f1_scores) / (np.sum(1- f1_scores)) * self.average_sample_size
+    def update_sample_size(self, f1_scores: torch.Tensor) -> None:
+        self.sample_size = (1 - f1_scores) / (torch.sum(1 - f1_scores)) * self.average_sample_size
+
 
 # like above but relative over-sampling (ros)
 @DATA_SAMPLERS.register_module()
 class ROSSampler(Sampler):
-    # ros_pct: ratio between sizes of upsampled minority classes to majority class
-    # any class smaller than majority class is a minority class 
-    # rus_maj_pct: ratio of kept elements in comparison to unkept ones of majority class 
-    # num_classes is the number of classes in the dataset 
+    """ implements random over-sampling of minority classes
+        every class, that is not as big as the biggest class is a minority class: 
+        Args:
+            ros_pct (float): ratio between sizes of upsampled minority classes to majority class
+                             any class smaller than majority class is a minority class
+            rus_maj_pct: ratio of kept elements in comparison to unkept ones of majority class
+    """
 
     def __init__(self,
                  dataset: Sized,
-                 num_classes: int, 
                  ros_pct: float = 1,
                  rus_maj_pct: float = 1, 
                  shuffle: bool = True,
@@ -274,7 +329,7 @@ class ROSSampler(Sampler):
         
         # for ROS
         # get the initial count of each class
-        self.num_classes = num_classes
+        self.num_classes = len(self.dataset.metainfo['classes'])
         self.ros_pct = ros_pct
         self.rus_maj_pct = rus_maj_pct
         data_list = self.dataset.load_data_list()
@@ -392,14 +447,16 @@ class ROSSampler(Sampler):
 # like above but relative-under-sampling (rus)
 @DATA_SAMPLERS.register_module()
 class RUSSampler(Sampler):
-    # rus_pct should be ratio between sizes of undersampled majority classes to minority class
-    # any class bigger than minority class is a majority class 
-    # ros_min_pct: array in which element i in the ratio of kept elements in comparison to unkept ones of class i 
-    # num_classes is the number of classes in the dataset 
+    """ implements random under-sampling of majority classes
+        every class, that is not as small as the smallest class is a majority class: 
+        Args:
+            rus_pct (float): should be ratio between sizes of undersampled majority classes to minority class
+                             any class bigger than minority class is a majority class
+            ros_min_pct (float): ratio of upsampled minority class to normal minority class
+    """
 
     def __init__(self,
                  dataset: Sized,
-                 num_classes: int, 
                  rus_pct: float = 1,
                  ros_min_pct: float = 1, 
                  shuffle: bool = True,
@@ -418,7 +475,7 @@ class RUSSampler(Sampler):
         self.round_up = round_up
 
         # get the initial count of each class
-        self.num_classes = num_classes
+        self.num_classes = len(self.dataset.metainfo['classes'])
         self.rus_pct = rus_pct
         self.ros_min_pct = ros_min_pct
         data_list = self.dataset.load_data_list()
