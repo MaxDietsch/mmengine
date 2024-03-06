@@ -282,14 +282,14 @@ class ROSSampler(Sampler):
         self.labels = torch.tensor([item['gt_label'] for item in data_list])
 
         self.label_counts = torch.bincount(self.labels, minlength = self.num_classes)
-        print(f'label counts: {self.label_counts}')
+        # print(f'label counts: {self.label_counts}')
 
         # calculate how often a sample needs to be duplicated for each class
         self.factors = torch.round(self.label_counts.max() * self.ros_pct * self.rus_maj_pct / self.label_counts, decimals = 2)
 
         # correctly set the number of samples of the majority class
         self.factors[torch.argmax(self.label_counts)] = 1 * self.rus_maj_pct
-        print(f'factors: {self.factors}')
+        # print(f'factors: {self.factors}')
 
         """
         # numpy:
@@ -313,10 +313,10 @@ class ROSSampler(Sampler):
                 (len(self.dataset) - rank) / world_size)
             self.total_size = len(self.dataset)
 
-        print(f'wolrd_size: {world_size}')
-        print(f'rank: {rank}')
-        print(f'num samples: {self.num_samples}')
-        print(f'total size: {self.total_size}')
+        #print(f'wolrd_size: {world_size}')
+        #print(f'rank: {rank}')
+        #print(f'num samples: {self.num_samples}')
+        #print(f'total size: {self.total_size}')
 
     def __iter__(self) -> Iterator[int]:
         """Iterate the indices."""
@@ -329,7 +329,7 @@ class ROSSampler(Sampler):
             # Probability part of the factor
             prob = self.factors[label] - int(self.factors[label])  
             # Determine replications based on probability
-            replications = int(torch.ceil(self.factors[label]) if torch.rand(1) < prob else torch.floor(self_factors[label]))
+            replications = int(torch.ceil(self.factors[label]) if torch.rand(1) < prob else torch.floor(self.factors[label]))
             # Add index 'replications' times
             indices.extend([idx] * replications)
             counts[label] += replications 
