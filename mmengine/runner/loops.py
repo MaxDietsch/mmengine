@@ -117,7 +117,7 @@ class EpochBasedTrainLoop(BaseLoop):
             
             # update sampler
             if isinstance(self.dataloader.sampler, DynamicSampler):
-                f1_scores = mtrcs['single-label/f1-score_classwise'] / 100
+                f1_scores = torch.tensor(mtrcs['single-label/f1-score_classwise']) / 100
                 self.dataloader.sampler.update_sample_size(f1_scores)
         
         self.runner.call_hook('after_train')
