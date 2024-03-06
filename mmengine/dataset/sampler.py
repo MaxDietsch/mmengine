@@ -337,7 +337,7 @@ class ROSSampler(Sampler):
         print(f"current distribution of samples from the dataset is : {counts}")
 
         # deterministically shuffle based on epoch and seed
-        #print(f'indices before shuffle: {indices}')
+        print(f'indices before shuffle: {indices}')
         print(f'length of indices: {len(indices)}')
         if self.shuffle:
             indices = torch.tensor(indices)
