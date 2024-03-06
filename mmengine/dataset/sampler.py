@@ -214,19 +214,19 @@ class DynamicSampler(Sampler):
 
         if self.enable_ROS:
             for label in range(0, self.num_classes): 
-                num_samples = int(self_sample_size[label])
+                num_samples = int(self.sample_size[label])
                 end_idx = start_idx + num_samples
                 if num_samples > 0 and len(self.label_indices[label]) > 0:
-                    sampled_indices = self_label_indices[label][torch.multinomial(self_label_indices[label], num_samples, replacement=True)]
+                    sampled_indices = self.label_indices[label][torch.multinomial(self.label_indices[label], num_samples, replacement=True)]
                     indices[start_idx:end_idx] = sampled_indices
                     counts[label] += num_samples
                 start_idx = end_idx
         else: 
             for label in range(0, self.num_classes): 
-                num_samples = int(self_sample_size[label])
+                num_samples = int(self.sample_size[label])
                 end_idx = start_idx + num_samples
                 if num_samples > 0 and len(self.label_indices[label]) > 0:
-                    sampled_indices = self_label_indices[label][torch.multinomial(self_label_indices[label], min(num_samples, len(self.label_indices[label])), replacement=True)]
+                    sampled_indices = self_label_indices[label][torch.multinomial(self.label_indices[label], min(num_samples, len(self.label_indices[label])), replacement=True)]
                     indices[start_idx:end_idx] = sampled_indices
                     counts[label] += num_samples
                 start_idx = end_idx
