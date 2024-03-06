@@ -192,7 +192,7 @@ class DynamicSampler(Sampler):
             # Find indices where labels match the current class index
             class_indices = (self.labels == class_idx).nonzero().squeeze()
             self.label_indices[class_idx] = class_indices
-        print(f'label_indices: {self.label_indices}')
+        #print(f'label_indices: {self.label_indices}')
         
         # numpy: 
         """
@@ -211,7 +211,7 @@ class DynamicSampler(Sampler):
         # get indices of elements which should be included in training 
         counts = torch.zeros(self.num_classes, dtype = torch.int)
         indices = torch.empty(self.sample_size.sum(), dtype=torch.long)
-
+        start_idx = 0
         if self.enable_ROS:
             for label in range(0, self.num_classes): 
                 num_samples = int(self.sample_size[label])
