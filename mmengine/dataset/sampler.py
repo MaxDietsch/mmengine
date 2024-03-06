@@ -338,6 +338,7 @@ class ROSSampler(Sampler):
 
         # deterministically shuffle based on epoch and seed
         if self.shuffle:
+            indices = torch.tensor(indices)
             g = torch.Generator()
             g.manual_seed(self.seed + self.epoch)
             indices = indices[torch.randperm(indices.size(0), generator=g)].tolist()
