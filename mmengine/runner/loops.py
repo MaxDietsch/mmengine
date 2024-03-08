@@ -314,6 +314,14 @@ class DOSTrainLoop(BaseLoop):
         # store the overloaded training samples
         self.z = {'image': [], 'n': [], 'w': []}
 
+        """Pytorchifying 
+        
+        in_dim = self.runner.model.head.in_channels
+        self.v = [torch.empty(samples, in_dim) for samples in self.samples_per_class]
+        
+        self.batch_idx = [torch.empty(samples, 1) for samples in self.samples_per_class]
+        """
+
 
     @property
     def max_epochs(self):
@@ -345,11 +353,25 @@ class DOSTrainLoop(BaseLoop):
                     self.d[h][i, j] = torch.norm(self.v[h][i] - self.v[h][j])
                     self.d[h][j, i] = self.d[h][i, j]
 
+        """Pytorchifiying: 
+        for h in range(self.num_classes): 
+            diff = self.v[h][ : , None, : ] - self.v.[h][ None, : , : ]
+            dist = torch.sqrt(torch.sum(diff ** 2, dim = 2))
+            dist.fill_diagonal_(float('inf'))
+            self.d[h] = dist
+        """
+
+
+
     def generate_overloaded_samples(self):
         """generates deep features like explained in the paper"""
 
         # get deep features
         with torch.no_grad():
+            """Pytorchifying:
+            count = [0 for _ in range(self.num_classes)]
+            """
+
             for idx, data_batch in enumerate(self.dataloader):
                 batch = self.runner.model.data_preprocessor(data_batch, True)
                 input = batch['inputs']
@@ -357,6 +379,18 @@ class DOSTrainLoop(BaseLoop):
                 
                 self.v[label].append(self.runner.model.extract_feat(input)[0])
                 self.batch_idx[label].append(idx)
+
+                """Pytorchifying
+                self.v[label][counter[label]] = self.runner.model.extract_feat(input)[0]
+                self.batch_idx[label][counter[label]] = idx
+                counter[label] += 1
+                
+                # adding batch: 
+                self.v[labels][counter[labels]] = self.runner.model.extract_feat(inputs)
+                for label in labels:
+                    self.batch_idx[label][counter[label]] = torch.tensor([idx, i])
+                counter[labels] += 1
+                """
 
         # get mutual distance matrix
         self.calc_mutual_distance_matrix()
@@ -368,6 +402,11 @@ class DOSTrainLoop(BaseLoop):
                 # get deep features with shortest distance to feature vector with batch index of batch_idx[i][j]
                 for x in torch.topk(self.d[i][j], self.k[i], largest = False).indices:
                     n.append(self.v[i][x])
+
+                """Pytorchifying:
+                indices = torch.topk(self.d[i][j], self.k[i], largest=False).indices
+                n = self.v[i][indices]
+                """
                 
                 # sample weight vectors
                 w = (torch.abs(torch.randn(self.r[i], self.k[i]))).to(torch.device("cuda"))
@@ -414,6 +453,7 @@ class DOSTrainLoop(BaseLoop):
         self.runner.model.train()
         self.dataloader.sampler.reset_generator(self.seed, self._epoch)
         for idx, data_batch in enumerate(self.dataloader):
+            """maybe batch should be data_batch ???, no data preprocessor gets called in train_step"""
             batch = self.runner.model.data_preprocessor(data_batch, True)
             self.run_iter(idx, data_batch)
         
