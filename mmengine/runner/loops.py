@@ -413,7 +413,7 @@ class DOSTrainLoop(BaseLoop):
             indices = torch.tensor([torch.topk(self.d[i][j], self.k[i], largest = False).indices for j in range(self.samples_per_class[i])])
             n2 = self.v[i][indices]
             
-            n ? []
+            n = []
             for j in range(self.samples_per_class[i]):
                 #n = []
                 
