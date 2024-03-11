@@ -413,8 +413,8 @@ class DOSTrainLoop(BaseLoop):
                 continue 
             indices = [torch.topk(self.d[i][j], self.k[i], largest = False).indices for j in range(self.samples_per_class[i])]
             indices = torch.stack(indices, dim = 0)
-            print(indices)
-            n2 = self.v[i][indices[0]]
+            #print(indices)
+            n2 = self.v[i][indices]
             
             w = (torch.abs(torch.randn(self.samples_per_class[i], self.r[i], self.k[i]))).to(torch.device("cuda"))
             w /= torch.norm(w, dim=2, keepdim = True)
@@ -442,7 +442,9 @@ class DOSTrainLoop(BaseLoop):
                 #self.z['image'].append(self.batch_idx[i][j])
                 #self.z['n'].append(n)
                 #self.z['w'].append(w)
-            print (n2[0] == n[0])
+            print(n2)
+            print(n)
+            print (n2 == n)
         
         # zero out big variables for next iterations
         #self.v = [[] for _ in range(self.num_classes)]
