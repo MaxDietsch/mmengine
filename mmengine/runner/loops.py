@@ -380,21 +380,23 @@ class DOSTrainLoop(BaseLoop):
             """
 
             #"""Pytorchifying:
-            count = [0 for _ in range(self.num_classes)]
+            counter = [0 for _ in range(self.num_classes)]
 
             for idx, data_batch in enumerate(self.dataloader):
                 batch = self.runner.model.data_preprocessor(data_batch, True)
                 input = batch['inputs']
                 labels = [i.gt_label for i in batch['data_samples']]
-                self.v[label][counter[label]] = self.runner.model.extract_feat(input) for label in labels
-                self.batch_idx[label][counter[label]] = idx
-                counter[label] += 1
+                # ugly
+                for label in labels: 
+                    self.v[label][counter[label]] = self.runner.model.extract_feat(input)[0]
+                    self.batch_idx[label][counter[label]] = idx
+                    counter[label] += 1
                 
                 # adding batch: 
-                self.v[labels][counter[labels]] = self.runner.model.extract_feat(inputs)
-                for label in labels:
-                    self.batch_idx[label][counter[label]] = torch.tensor([idx, i])
-                counter[labels] += 1
+                # self.v[labels][counter[labels]] = self.runner.model.extract_feat(inputs)
+                #for label in labels:
+                    # self.batch_idx[label][counter[label]] = torch.tensor([idx, i])
+                # counter[labels] += 1
                 #"""
             print(self.v)
 
