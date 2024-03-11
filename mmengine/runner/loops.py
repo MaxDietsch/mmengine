@@ -300,7 +300,7 @@ class DOSTrainLoop(BaseLoop):
         # set the overloading parameter k, set r and samples_per_class
         self.samples_per_class = samples_per_class 
         self.r = r #[0, 3, 2, 1]
-        self.k = r #[0, 3, 2, 1]
+        self.k = k #[0, 3, 2, 1]
         
         # store mutual distance matrix
         self.d = [torch.zeros((i, i)) for i in self.samples_per_class]
@@ -409,8 +409,8 @@ class DOSTrainLoop(BaseLoop):
 
         for i in range(self.num_classes):
 
-            print(d[i][j] for j in range(self.samples_per_class[i]))
-            indices = torch.tensor([torch.topk(self.d[i][j], self.k[i], largest = False).indices for j in range(self.samples_per_class[i])])
+            indices = [torch.topk(self.d[i][j], self.k[i], largest = False).indices for j in range(self.samples_per_class[i])]
+            print(indices)
             n2 = self.v[i][indices]
             
             n = []
