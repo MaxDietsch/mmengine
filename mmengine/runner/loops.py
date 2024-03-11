@@ -408,6 +408,7 @@ class DOSTrainLoop(BaseLoop):
         #print(self.d)
 
         for i in range(self.num_classes):
+            
             for j in range(self.samples_per_class[i]):
                 n = []
                 
@@ -418,6 +419,7 @@ class DOSTrainLoop(BaseLoop):
                 #"""Pytorchifying:
                 indices = torch.topk(self.d[i][j], self.k[i], largest=False).indices
                 n = self.v[i][indices]
+                print(n) 
                 #"""
                 
                 # sample weight vectors
