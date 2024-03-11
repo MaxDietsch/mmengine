@@ -443,6 +443,7 @@ class DOSTrainLoop(BaseLoop):
 
             for j, pos in enumerate(self.batch_idx[i]):
                 print(pos)
+                print(self.n[pos[0] * self.b_size + pos[1]])
                 self.n[pos[0] * self.b_size + pos[1]] = n[j]
                 self.w[pos[0] * self.b_size + pos[1]] = w[j]
                         
