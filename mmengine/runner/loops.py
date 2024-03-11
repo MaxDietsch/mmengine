@@ -324,10 +324,10 @@ class DOSTrainLoop(BaseLoop):
         self.d = [torch.zeros((i, i)) for i in self.samples_per_class]
 
         # store for each image, the deep features (at the right batch and location in the batch )
-        self.n = [torch.empty(len_epoch, b_size, self.k[i], in_dim) for i in range(self.num_classes)]
+        self.n = [torch.empty(self.samples_per_class[i], b_size, self.k[i], in_dim) for i in range(self.num_classes)]
 
         # do the same for the weights
-        self.w = [torch.empty(len_epoch, b_size, self.r[i], self.k[i]) for i in range(self.num_classes)]
+        self.w = [torch.empty(self.samples_per_class[i], b_size, self.r[i], self.k[i]) for i in range(self.num_classes)]
         #"""
         
         """
