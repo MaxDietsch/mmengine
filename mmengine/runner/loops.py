@@ -525,8 +525,8 @@ class DOSTrainLoop(BaseLoop):
         # outputs should be a dict of loss.
 
         ouputs = self.runner.model.train_step(data_batch, 
-                                              self.n[idx * self.batch_size : (idx + 1) * self.batch_size],
-                                              self.w[idx * self.batch_size : (idx + 1) * self.batch_size],
+                                              self.n[idx * self.b_size : (idx + 1) * self.b_size],
+                                              self.w[idx * self.b_size : (idx + 1) * self.b_size],
                                               optim_wrapper = self.runner.optim_wrapper)
 
         """
