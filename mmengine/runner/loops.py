@@ -415,7 +415,6 @@ class DOSTrainLoop(BaseLoop):
                 #print(feats)
                 for i, label in enumerate(labels): 
                     self.v[label][counter[label]] = feats[i]
-                    print(feats[i].device)
                     self.batch_idx[label][counter[label]] = torch.Tensor([idx, i])
                     counter[label] += 1
                 
@@ -435,6 +434,7 @@ class DOSTrainLoop(BaseLoop):
             indices = [torch.topk(self.d[i][j], self.k[i], largest = False).indices for j in range(self.samples_per_class[i])]
             indices = torch.stack(indices, dim = 0)
             #print(indices)
+            print(v[i][0].device)
             n = self.v[i][indices]
             #print(n)
             #print(n.shape)
