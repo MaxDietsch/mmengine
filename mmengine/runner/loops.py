@@ -419,6 +419,7 @@ class DOSTrainLoop(BaseLoop):
 
                 # ugly
                 feats = self.runner.model.extract_feat(input)[0]
+
                 #print(feats)
                 for i, label in enumerate(labels): 
                     self.v[label][counter[label]] = feats[i]
@@ -448,13 +449,11 @@ class DOSTrainLoop(BaseLoop):
             w = (torch.abs(torch.randn(self.samples_per_class[i], self.r[i], self.k[i]))).to(torch.device("cuda"))
             w /= torch.norm(w, dim=2, keepdim = True)
 
-            for pos in self.batch_idx[i]:
-                print(pos)
-            
-            self.n[i] = n
-
-            self.w[i] = w 
-
+            for pos, j in enumerate(self.batch_idx[i]):
+                self.n[pos[0]][pos[1]] = n[j]
+                self.w[pos[0]][pos[1]] = w[j]
+                        
+        print(self.n)
 
             """
             for j in range(self.samples_per_class[i]):
