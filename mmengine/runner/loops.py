@@ -318,8 +318,6 @@ class DOSTrainLoop(BaseLoop):
         
         in_dim = self.runner.model.head.in_channels
         self.v = [torch.empty(samples, in_dim) for samples in self.samples_per_class]
-        print(self.v)
-        print(self.v[0])
         self.batch_idx = [torch.empty(samples, 1) for samples in self.samples_per_class]
         #"""
 
@@ -390,6 +388,8 @@ class DOSTrainLoop(BaseLoop):
                 # ugly
                 feats = self.runner.model.extract_feat(input)
                 print(feats)
+                print(feats[0])
+                print(feats[0].shape)
                 for i, label in enumerate(labels): 
                     self.v[label][counter[label]] = feats[i]
                     self.batch_idx[label][counter[label]] = idx
