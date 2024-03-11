@@ -313,7 +313,7 @@ class DOSTrainLoop(BaseLoop):
         self.v = [torch.empty(samples, in_dim) for samples in self.samples_per_class]
 
         # store the batch number and position in each batch of each image
-        self.batch_idx = [torch.zeros((samples, 2), dtype = torch.int16) for samples in self.samples_per_class]
+        self.batch_idx = [torch.zeros((samples, 2)) for samples in self.samples_per_class]
         
         # store mutual distance matrix
         self.d = [torch.zeros((i, i)) for i in self.samples_per_class]
@@ -338,8 +338,6 @@ class DOSTrainLoop(BaseLoop):
         # store the overloaded training samples
         self.z = {'image': [], 'n': [], 'w': []}
         """
-
-
 
     @property
     def max_epochs(self):
