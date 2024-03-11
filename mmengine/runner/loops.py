@@ -412,6 +412,8 @@ class DOSTrainLoop(BaseLoop):
             indices = [torch.topk(self.d[i][j], self.k[i], largest = False).indices for j in range(self.samples_per_class[i])]
             print(indices)
             n2 = self.v[i][indices]
+
+
             
             n = []
             for j in range(self.samples_per_class[i]):
@@ -434,9 +436,9 @@ class DOSTrainLoop(BaseLoop):
                 #self.z['image'].append(self.batch_idx[i][j])
                 #self.z['n'].append(n)
                 #self.z['w'].append(w)
-        print(n2)
-        print(n) 
-        print (n2[0] == n[0])
+            print(n2)
+            print(n) 
+            print (n2[0] == n[0])
         
         # zero out big variables for next iterations
         #self.v = [[] for _ in range(self.num_classes)]
