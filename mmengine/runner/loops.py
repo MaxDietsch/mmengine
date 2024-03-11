@@ -387,8 +387,10 @@ class DOSTrainLoop(BaseLoop):
                 input = batch['inputs']
                 labels = [i.gt_label for i in batch['data_samples']]
                 # ugly
-                for label in labels: 
-                    self.v[label][counter[label]] = self.runner.model.extract_feat(input)[0]
+                feats = self.runner.model.extract_feat(input)
+                print(feats)
+                for i, label in enumerate(labels): 
+                    self.v[label][counter[label]] = feats[i]
                     self.batch_idx[label][counter[label]] = idx
                     counter[label] += 1
                 
