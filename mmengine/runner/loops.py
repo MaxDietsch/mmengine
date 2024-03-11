@@ -408,9 +408,14 @@ class DOSTrainLoop(BaseLoop):
         #print(self.d)
 
         for i in range(self.num_classes):
+
+
+            indices = torch.tensor([torch.topk(self.d[i][j], self.k[i], largest = False).indices for j in range(self.samples_per_class[i])])
+            n2 = self.v[i][indices]
             
+            n ? []
             for j in range(self.samples_per_class[i]):
-                n = []
+                #n = []
                 
                 # get deep features with shortest distance to feature vector with batch index of batch_idx[i][j]
                 #for x in torch.topk(self.d[i][j], self.k[i], largest = False).indices:
@@ -418,8 +423,7 @@ class DOSTrainLoop(BaseLoop):
 
                 #"""Pytorchifying:
                 indices = torch.topk(self.d[i][j], self.k[i], largest=False).indices
-                n = self.v[i][indices]
-                print(n) 
+                n.append(self.v[i][indices])
                 #"""
                 
                 # sample weight vectors
@@ -427,9 +431,12 @@ class DOSTrainLoop(BaseLoop):
                 w /= torch.norm(w, dim=1, keepdim = True)
                 
                 # define overloaded sample
-                self.z['image'].append(self.batch_idx[i][j])
-                self.z['n'].append(n)
-                self.z['w'].append(w)
+                #self.z['image'].append(self.batch_idx[i][j])
+                #self.z['n'].append(n)
+                #self.z['w'].append(w)
+        print(n2)
+        print(n) 
+        print (n2[0] == n[0])
         
         # zero out big variables for next iterations
         #self.v = [[] for _ in range(self.num_classes)]
