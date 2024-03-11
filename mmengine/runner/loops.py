@@ -317,8 +317,10 @@ class DOSTrainLoop(BaseLoop):
         #"""Pytorchifying 
         
         in_dim = self.runner.model.head.in_channels
-        self.v = [torch.empty(samples, in_dim) for samples in self.samples_per_class]
-        self.batch_idx = [torch.empty(samples, 1) for samples in self.samples_per_class]
+        #self.v = [torch.empty(samples, in_dim) for samples in self.samples_per_class]
+        self.v = torch.nested_tensor([torch.empty(samples, in_dim) for samples in self.samples_per_class])
+        #self.batch_idx = [torch.empty(samples, 1) for samples in self.samples_per_class]
+        self.batch_idx = torch.nested_tensor([torch.empty(samples, 1) for samples in self.samples_per_class])
         #"""
 
 
@@ -385,6 +387,13 @@ class DOSTrainLoop(BaseLoop):
                 batch = self.runner.model.data_preprocessor(data_batch, True)
                 input = batch['inputs']
                 labels = [i.gt_label for i in batch['data_samples']]
+                
+                feats = self.runner.model.extract_feat(input)[0]
+
+                #self.v[labels[i]][counter[labels[i]]] = feats[i] for i in range(feat.shape[0])
+                #self.batch_idx[labels][counter[labels]] = idx
+                #counter[labels[i]] += 1 for i in range(labels.shape[0])
+
                 # ugly
                 feats = self.runner.model.extract_feat(input)[0]
                 #print(feats)
@@ -393,30 +402,25 @@ class DOSTrainLoop(BaseLoop):
                     self.batch_idx[label][counter[label]] = idx
                     counter[label] += 1
                 
-                # adding batch: 
-                # self.v[labels][counter[labels]] = self.runner.model.extract_feat(inputs)
-                #for label in labels:
-                    # self.batch_idx[label][counter[label]] = torch.tensor([idx, i])
-                # counter[labels] += 1
                 #"""
-            print(self.v)
+            #print(self.v)
 
         # get mutual distance matrix
         self.calc_mutual_distance_matrix()
-        print(self.d)
+        #print(self.d)
 
         for i in range(self.num_classes):
             for j in range(self.samples_per_class[i]):
                 n = []
                 
                 # get deep features with shortest distance to feature vector with batch index of batch_idx[i][j]
-                for x in torch.topk(self.d[i][j], self.k[i], largest = False).indices:
-                    n.append(self.v[i][x])
+                #for x in torch.topk(self.d[i][j], self.k[i], largest = False).indices:
+                    #n.append(self.v[i][x])
 
-                """Pytorchifying:
+                #"""Pytorchifying:
                 indices = torch.topk(self.d[i][j], self.k[i], largest=False).indices
                 n = self.v[i][indices]
-                """
+                #"""
                 
                 # sample weight vectors
                 w = (torch.abs(torch.randn(self.r[i], self.k[i]))).to(torch.device("cuda"))
@@ -428,8 +432,8 @@ class DOSTrainLoop(BaseLoop):
                 self.z['w'].append(w)
         
         # zero out big variables for next iterations
-        self.v = [[] for _ in range(self.num_classes)]
-        self.batch_idx = [[] for _ in range(self.num_classes)]
+        #self.v = [[] for _ in range(self.num_classes)]
+        #self.batch_idx = [[] for _ in range(self.num_classes)]
 
 
 
