@@ -320,10 +320,10 @@ class DOSTrainLoop(BaseLoop):
 
         # store for each image, the deep features (at the right batch and location in the batch )
         #self.n = [torch.empty(self.samples_per_class[i], self.k[i], in_dim) for i in range(self.num_classes)]
-        self.n = [[torch.empty(0, 0)] for _ in range(len(self.dataloader.dataset))]
+        self.n = [torch.empty(0, 0) for _ in range(len(self.dataloader.dataset))]
 
         # do the same for the weights
-        self.w = [[torch.empty(0, 0)] for _ in range(len(self.dataloader.dataset))]
+        self.w = [torch.empty(0, 0) for _ in range(len(self.dataloader.dataset))]
 
         """
         # store mutual distance matrix
@@ -429,6 +429,7 @@ class DOSTrainLoop(BaseLoop):
 
             # """Pytorchifying
             if self.k[i] == 0:
+
                 continue 
             indices = [torch.topk(self.d[i][j], self.k[i], largest = False).indices for j in range(self.samples_per_class[i])]
             indices = torch.stack(indices, dim = 0)
