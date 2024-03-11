@@ -293,10 +293,12 @@ class DOSTrainLoop(BaseLoop):
         #assert self.dataloader.batch_size == 1, 'The batch size should be set to 1 if you want to use DOS when using DOSTrainLoop'        
 
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
-        print(len(self.dataloader.dataset))
-        print(self.dataloader.batch_size)
-        print(len(self.dataloader.dataset) / self.dataloader.batch_size)
-        print(len(dataloader))
+        #print(len(self.dataloader.dataset))
+        #print(self.dataloader.batch_size)
+        #print(len(self.dataloader.dataset) / self.dataloader.batch_size)
+        #print(len(dataloader))
+        b_size = self.dataloader.batch_size
+        len_epoch = torch.ceil(len(self.dataloader.dataset) / b_size)
 
         # for generator of dataloader sampler
         self.seed = 0
@@ -305,26 +307,42 @@ class DOSTrainLoop(BaseLoop):
         self.samples_per_class = samples_per_class 
         self.r = r #[0, 3, 2, 1]
         self.k = k #[0, 3, 2, 1]
+
+
+        #"""Pytorchifying 
+        # dimension of deep features
+        in_dim = self.runner.model.head.in_channels
+
+        # storde deep features 
+        self.v = [torch.empty(samples, in_dim) for samples in self.samples_per_class]
+
+        # store the batch number and position in each batch of each image
+        self.batch_idx = [torch.empty(samples, 2) for samples in self.samples_per_class]
         
         # store mutual distance matrix
         self.d = [torch.zeros((i, i)) for i in self.samples_per_class]
 
+        # store for each image, the deep features (at the right batch and location in the batch )
+        self.n = [torch.empty(len_epoch, b_size, self.k[i], in_dim) for i in range(self.num_classes)]
+
+        # do the same for the weights
+        self.w = [torch.empty(len_epoch, b_size, self.r[i], self.k[i]) for i in range(self.num_classes)]
+        #"""
+        
+        """
+        # store mutual distance matrix
+        self.d = [torch.zeros((i, i)) for i in self.samples_per_class]
+
         # for efficiency, so that idx of image in dataloader is stored and not whole image
-        #self.batch_idx = [[] for _ in range(self.num_classes)]
+        self.batch_idx = [[] for _ in range(self.num_classes)]
 
         # store deep features 
-        #self.v = [[] for _ in range(self.num_classes)]
+        self.v = [[] for _ in range(self.num_classes)]
         
         # store the overloaded training samples
         self.z = {'image': [], 'n': [], 'w': []}
+        """
 
-        #"""Pytorchifying 
-        
-        in_dim = self.runner.model.head.in_channels
-        self.v = [torch.empty(samples, in_dim) for samples in self.samples_per_class]
-        self.batch_idx = [torch.empty(samples, 2) for samples in self.samples_per_class]
-        self.n = [torch.empty(1, self.k[i]) for i in range(self.num_classes)]
-        #"""
 
 
     @property
@@ -421,10 +439,14 @@ class DOSTrainLoop(BaseLoop):
             indices = torch.stack(indices, dim = 0)
             #print(indices)
             n = self.v[i][indices]
+            print(n)
+            print(n.shape)
             
             w = (torch.abs(torch.randn(self.samples_per_class[i], self.r[i], self.k[i]))).to(torch.device("cuda"))
             w /= torch.norm(w, dim=2, keepdim = True)
-
+            
+            for pos, j  in enumerate(self.batch_idx[i]):
+                self.n[pos[0], pos[1]] = n[j]
 
 
             """
