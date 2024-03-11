@@ -421,7 +421,7 @@ class DOSTrainLoop(BaseLoop):
                 #print(feats)
                 for i, label in enumerate(labels): 
                     self.v[label][counter[label]] = feats[i]
-                    self.batch_idx[label][counter[label]] = [idx, i]
+                    self.batch_idx[label][counter[label]] = torch.tensor([idx, i])
                     counter[label] += 1
                 
                 #"""
