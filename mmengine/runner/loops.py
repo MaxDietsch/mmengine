@@ -323,7 +323,7 @@ class DOSTrainLoop(BaseLoop):
         in_dim = self.runner.model.head.in_channels
         self.v = [torch.empty(samples, in_dim) for samples in self.samples_per_class]
         self.batch_idx = [torch.empty(samples, 2) for samples in self.samples_per_class]
-        self.n = [torch.empty(, self.k[i]) for i in range(self.num_classes)]
+        self.n = [torch.empty(1, self.k[i]) for i in range(self.num_classes)]
         #"""
 
 
