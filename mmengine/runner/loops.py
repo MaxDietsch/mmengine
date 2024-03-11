@@ -324,11 +324,13 @@ class DOSTrainLoop(BaseLoop):
         self.d = [torch.zeros((i, i)) for i in self.samples_per_class]
 
         # store for each image, the deep features (at the right batch and location in the batch )
-        self.n = [torch.empty(self.samples_per_class[i], self.k[i], in_dim) for i in range(self.num_classes)]
+        #self.n = [torch.empty(self.samples_per_class[i], self.k[i], in_dim) for i in range(self.num_classes)]
+        self.n = [[[torch.empty(self.k[i], in_dim)] for _ in range(self.samples_per_class[i])] for i in range(self.num_classes)]
 
         # do the same for the weights
-        self.w = [torch.empty(self.samples_per_class[i], self.r[i], self.k[i]) for i in range(self.num_classes)]
-        
+        #self.w = [torch.empty(self.samples_per_class[i], self.r[i], self.k[i]) for i in range(self.num_classes)]
+        self.w = [[[torch.empty(self.r[i], self.k[i])] for _ in range(self.samples_per_class[i])] for i in range(self.num_classes)]
+
         """
         # store mutual distance matrix
         self.d = [torch.zeros((i, i)) for i in self.samples_per_class]
@@ -439,14 +441,19 @@ class DOSTrainLoop(BaseLoop):
             indices = torch.stack(indices, dim = 0)
             #print(indices)
             n = self.v[i][indices]
-            print(n)
-            print(n.shape)
-            print(self.n[i].shape)
+            #print(n)
+            #print(n.shape)
+            #print(self.n[i].shape)
             
             w = (torch.abs(torch.randn(self.samples_per_class[i], self.r[i], self.k[i]))).to(torch.device("cuda"))
             w /= torch.norm(w, dim=2, keepdim = True)
+
+            for pos in self.batch_idx[i]:
+                print(pos)
             
             self.n[i] = n
+
+            self.w[i] = w 
 
 
             """
@@ -525,10 +532,16 @@ class DOSTrainLoop(BaseLoop):
         # Enable gradient accumulation mode and avoid unnecessary gradient
         # synchronization during gradient accumulation process.
         # outputs should be a dict of loss.
+
+        ouputs = self.runner.model.train_step(data_batch, self.n, self.w,
+                                              optim_wrapper = self.runner.optim_wrapper)
+
+        """
         outputs = self.runner.model.train_step(
             data_batch, 
             self.z['n'][idx], self.z['w'][idx],
             optim_wrapper=self.runner.optim_wrapper)
+        """
 
         self.runner.call_hook(
             'after_train_iter',
