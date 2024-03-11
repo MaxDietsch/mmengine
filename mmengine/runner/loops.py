@@ -441,7 +441,7 @@ class DOSTrainLoop(BaseLoop):
             w = (torch.abs(torch.randn(self.samples_per_class[i], self.r[i], self.k[i]))).to(torch.device("cuda"))
             w /= torch.norm(w, dim=2, keepdim = True)
 
-            for pos, j in enumerate(self.batch_idx[i]):
+            for j, pos in enumerate(self.batch_idx[i]):
                 print(n[j])
                 self.n[pos[0] * self.b_size + pos[1]] = n[j]
                 self.w[pos[0] * self.b_size + pos[1]] = w[j]
