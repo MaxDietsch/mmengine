@@ -19,6 +19,7 @@ import numpy as np
 from mmengine.dataset import DynamicSampler
 import torch.nn.functional as F
 import heapq
+import math
 
 
 
@@ -298,7 +299,7 @@ class DOSTrainLoop(BaseLoop):
         #print(len(self.dataloader.dataset) / self.dataloader.batch_size)
         #print(len(dataloader))
         b_size = self.dataloader.batch_size
-        len_epoch = torch.ceil(torch.tensor(len(self.dataloader.dataset) / b_size))
+        len_epoch = math.ceil(len(self.dataloader.dataset) / b_size)
 
         # for generator of dataloader sampler
         self.seed = 0
