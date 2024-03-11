@@ -324,11 +324,10 @@ class DOSTrainLoop(BaseLoop):
         self.d = [torch.zeros((i, i)) for i in self.samples_per_class]
 
         # store for each image, the deep features (at the right batch and location in the batch )
-        self.n = [torch.empty(self.samples_per_class[i], b_size, self.k[i], in_dim) for i in range(self.num_classes)]
+        self.n = [torch.empty(self.samples_per_class[i], self.k[i], in_dim) for i in range(self.num_classes)]
 
         # do the same for the weights
-        self.w = [torch.empty(self.samples_per_class[i], b_size, self.r[i], self.k[i]) for i in range(self.num_classes)]
-        #"""
+        self.w = [torch.empty(self.samples_per_class[i], self.r[i], self.k[i]) for i in range(self.num_classes)]
         
         """
         # store mutual distance matrix
@@ -442,14 +441,12 @@ class DOSTrainLoop(BaseLoop):
             n = self.v[i][indices]
             print(n)
             print(n.shape)
-            print(self.n.shape)
+            print(self.n[i].shape)
             
             w = (torch.abs(torch.randn(self.samples_per_class[i], self.r[i], self.k[i]))).to(torch.device("cuda"))
             w /= torch.norm(w, dim=2, keepdim = True)
             
-            for pos, j  in enumerate(self.batch_idx[i]):
-                print(pos)
-                self.n[pos[0], pos[1]] = n[j]
+            self.n[i] = n
 
 
             """
