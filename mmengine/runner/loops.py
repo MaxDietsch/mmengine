@@ -293,6 +293,7 @@ class DOSTrainLoop(BaseLoop):
         #assert self.dataloader.batch_size == 1, 'The batch size should be set to 1 if you want to use DOS when using DOSTrainLoop'        
 
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
+        print(self.dataloader.dataset)
 
         # for generator of dataloader sampler
         self.seed = 0
@@ -318,7 +319,8 @@ class DOSTrainLoop(BaseLoop):
         
         in_dim = self.runner.model.head.in_channels
         self.v = [torch.empty(samples, in_dim) for samples in self.samples_per_class]
-        self.batch_idx = [torch.empty(samples, 1) for samples in self.samples_per_class]
+        self.batch_idx = [torch.empty(samples, 2) for samples in self.samples_per_class]
+        self.n = [torch.empty(samples[i], self.k[i]) for i in range(self.num_classes)]
         #"""
 
 
@@ -397,7 +399,7 @@ class DOSTrainLoop(BaseLoop):
                 #print(feats)
                 for i, label in enumerate(labels): 
                     self.v[label][counter[label]] = feats[i]
-                    self.batch_idx[label][counter[label]] = idx
+                    self.batch_idx[label][counter[label]] = [idx, i]
                     counter[label] += 1
                 
                 #"""
@@ -408,47 +410,45 @@ class DOSTrainLoop(BaseLoop):
         #print(self.d)
 
         for i in range(self.num_classes):
-            
+
+            # """Pytorchifying
             if self.k[i] == 0:
                 continue 
             indices = [torch.topk(self.d[i][j], self.k[i], largest = False).indices for j in range(self.samples_per_class[i])]
             indices = torch.stack(indices, dim = 0)
             #print(indices)
-            n2 = self.v[i][indices]
+            n = self.v[i][indices]
             
             w = (torch.abs(torch.randn(self.samples_per_class[i], self.r[i], self.k[i]))).to(torch.device("cuda"))
             w /= torch.norm(w, dim=2, keepdim = True)
 
+            self.z['image'] = [self.batch_idx[i][j]) for j in range(self.samples_per_class[i])]
 
-            
-            n = []
+
+            """
             for j in range(self.samples_per_class[i]):
-                #n = []
-                
+                n = []
                 # get deep features with shortest distance to feature vector with batch index of batch_idx[i][j]
-                #for x in torch.topk(self.d[i][j], self.k[i], largest = False).indices:
-                    #n.append(self.v[i][x])
-
-                #"""Pytorchifying:
-                indices = torch.topk(self.d[i][j], self.k[i], largest=False).indices
-                n.append(self.v[i][indices])
-                #"""
+                for x in torch.topk(self.d[i][j], self.k[i], largest = False).indices:
+                    n.append(self.v[i][x])
                 
                 # sample weight vectors
                 w = (torch.abs(torch.randn(self.r[i], self.k[i]))).to(torch.device("cuda"))
                 w /= torch.norm(w, dim=1, keepdim = True)
                 
                 # define overloaded sample
-                #self.z['image'].append(self.batch_idx[i][j])
-                #self.z['n'].append(n)
-                #self.z['w'].append(w)
-            print(n2)
-            print(n)
-            print (n2 == n)
+                self.z['image'].append(self.batch_idx[i][j])
+                self.z['n'].append(n)
+                self.z['w'].append(w)
+            
+            #print(n2)
+            #print(n)
+            #print (n2 == n)
         
         # zero out big variables for next iterations
-        #self.v = [[] for _ in range(self.num_classes)]
-        #self.batch_idx = [[] for _ in range(self.num_classes)]
+        self.v = [[] for _ in range(self.num_classes)]
+        self.batch_idx = [[] for _ in range(self.num_classes)]
+        """
 
 
 
