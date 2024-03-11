@@ -422,7 +422,6 @@ class DOSTrainLoop(BaseLoop):
             w = (torch.abs(torch.randn(self.samples_per_class[i], self.r[i], self.k[i]))).to(torch.device("cuda"))
             w /= torch.norm(w, dim=2, keepdim = True)
 
-            self.z['image'] = [self.batch_idx[i][j]) for j in range(self.samples_per_class[i])]
 
 
             """
