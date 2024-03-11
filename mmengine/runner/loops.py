@@ -293,7 +293,7 @@ class DOSTrainLoop(BaseLoop):
         #assert self.dataloader.batch_size == 1, 'The batch size should be set to 1 if you want to use DOS when using DOSTrainLoop'        
 
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
-        print(self.dataloader.dataset)
+        print(self.dataloader.dataset.metainfo)
 
         # for generator of dataloader sampler
         self.seed = 0
