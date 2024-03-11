@@ -290,7 +290,7 @@ class DOSTrainLoop(BaseLoop):
         from ..dataset.sampler import DOSSampler
         assert isinstance(self.dataloader.sampler, DOSSampler), 'The sampler of the dataloader should be of type DOSSampler when using DOSTrainLoop'
 
-        assert self.dataloader.batch_size == 1, 'The batch size should be set to 1 if you want to use DOS when using DOSTrainLoop'        
+        #assert self.dataloader.batch_size == 1, 'The batch size should be set to 1 if you want to use DOS when using DOSTrainLoop'        
 
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
 
