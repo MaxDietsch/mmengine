@@ -294,12 +294,7 @@ class DOSTrainLoop(BaseLoop):
         #assert self.dataloader.batch_size == 1, 'The batch size should be set to 1 if you want to use DOS when using DOSTrainLoop'        
 
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
-        #print(len(self.dataloader.dataset))
-        #print(self.dataloader.batch_size)
-        #print(len(self.dataloader.dataset) / self.dataloader.batch_size)
-        #print(len(dataloader))
-        b_size = self.dataloader.batch_size
-        len_epoch = math.ceil(len(self.dataloader.dataset) / b_size)
+        self.b_size = self.dataloader.batch_size
 
         # for generator of dataloader sampler
         self.seed = 0
@@ -449,8 +444,8 @@ class DOSTrainLoop(BaseLoop):
             w /= torch.norm(w, dim=2, keepdim = True)
 
             for pos, j in enumerate(self.batch_idx[i]):
-                self.n[pos[0]][pos[1]] = n[j]
-                self.w[pos[0]][pos[1]] = w[j]
+                self.n[pos[0] * self.b_size + pos[1]] = n[j]
+                self.w[pos[0] * self.b_size + pos[1]] = w[j]
                         
         print(self.n)
 
