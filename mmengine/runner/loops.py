@@ -442,10 +442,10 @@ class DOSTrainLoop(BaseLoop):
             w /= torch.norm(w, dim=2, keepdim = True)
 
             for j, pos in enumerate(self.batch_idx[i]):
-                self.n[int(pos[0]) * self.b_size + int(pos[1])] = n[j]
+                self.n[pos[0] * self.b_size + pos[1]] = n[j]
                 self.w[pos[0] * self.b_size + pos[1]] = w[j]
                         
-        print(self.n)
+        #print(self.n)
 
         """
             for j in range(self.samples_per_class[i]):
@@ -524,7 +524,9 @@ class DOSTrainLoop(BaseLoop):
         # synchronization during gradient accumulation process.
         # outputs should be a dict of loss.
 
-        ouputs = self.runner.model.train_step(data_batch, self.n, self.w,
+        ouputs = self.runner.model.train_step(data_batch, 
+                                              self.n[idx * self.batch_size : (idx + 1) * self.batch_size],
+                                              self.w[idx * self.batch_size : (idx + 1) * self.batch_size],
                                               optim_wrapper = self.runner.optim_wrapper)
 
         """
