@@ -455,7 +455,7 @@ class DOSTrainLoop(BaseLoop):
                         
         print(self.n)
 
-            """
+        """
             for j in range(self.samples_per_class[i]):
                 n = []
                 # get deep features with shortest distance to feature vector with batch index of batch_idx[i][j]
