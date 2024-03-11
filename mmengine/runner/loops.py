@@ -295,7 +295,7 @@ class DOSTrainLoop(BaseLoop):
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
         print(len(self.dataloader.dataset))
         print(self.dataloader.batch_size)
-        print(len(self.dataloader.dataset / self.dataloader.batch_size))
+        print(len(self.dataloader.dataset) / self.dataloader.batch_size)
         print(len(dataloader))
 
         # for generator of dataloader sampler
