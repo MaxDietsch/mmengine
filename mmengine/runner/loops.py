@@ -442,6 +442,7 @@ class DOSTrainLoop(BaseLoop):
             w /= torch.norm(w, dim=2, keepdim = True)
 
             for pos, j in enumerate(self.batch_idx[i]):
+                print(n[j])
                 self.n[pos[0] * self.b_size + pos[1]] = n[j]
                 self.w[pos[0] * self.b_size + pos[1]] = w[j]
                         
