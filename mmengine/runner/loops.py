@@ -19,7 +19,6 @@ import numpy as np
 from mmengine.dataset import DynamicSampler
 import torch.nn.functional as F
 import heapq
-import torch.nested
 
 
 
@@ -318,10 +317,8 @@ class DOSTrainLoop(BaseLoop):
         #"""Pytorchifying 
         
         in_dim = self.runner.model.head.in_channels
-        #self.v = [torch.empty(samples, in_dim) for samples in self.samples_per_class]
-        self.v = torch.nested.nested_tensor([torch.empty(samples, in_dim) for samples in self.samples_per_class])
-        #self.batch_idx = [torch.empty(samples, 1) for samples in self.samples_per_class]
-        self.batch_idx = torch.nested.nested_tensor([torch.empty(samples, 1) for samples in self.samples_per_class])
+        self.v = [torch.empty(samples, in_dim) for samples in self.samples_per_class]
+        self.batch_idx = [torch.empty(samples, 1) for samples in self.samples_per_class]
         #"""
 
 
