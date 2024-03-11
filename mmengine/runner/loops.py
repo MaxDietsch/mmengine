@@ -385,8 +385,8 @@ class DOSTrainLoop(BaseLoop):
             for idx, data_batch in enumerate(self.dataloader):
                 batch = self.runner.model.data_preprocessor(data_batch, True)
                 input = batch['inputs']
-                label = [i.gt_label for i in batch['data_samples']]
-                self.v[label][counter[label]] = self.runner.model.extract_feat(input)[0]
+                labels = [i.gt_label for i in batch['data_samples']]
+                self.v[label][counter[label]] = self.runner.model.extract_feat(input) for label in labels
                 self.batch_idx[label][counter[label]] = idx
                 counter[label] += 1
                 
