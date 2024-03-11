@@ -293,7 +293,10 @@ class DOSTrainLoop(BaseLoop):
         #assert self.dataloader.batch_size == 1, 'The batch size should be set to 1 if you want to use DOS when using DOSTrainLoop'        
 
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
-        print(self.dataloader.dataset.metainfo)
+        print(len(self.dataloader.dataset))
+        print(self.dataloader.batch_size)
+        print(len(self.dataloader.dataset / self.dataloader.batch_size))
+        print(len(dataloader))
 
         # for generator of dataloader sampler
         self.seed = 0
@@ -320,7 +323,7 @@ class DOSTrainLoop(BaseLoop):
         in_dim = self.runner.model.head.in_channels
         self.v = [torch.empty(samples, in_dim) for samples in self.samples_per_class]
         self.batch_idx = [torch.empty(samples, 2) for samples in self.samples_per_class]
-        self.n = [torch.empty(samples[i], self.k[i]) for i in range(self.num_classes)]
+        self.n = [torch.empty(, self.k[i]) for i in range(self.num_classes)]
         #"""
 
 
