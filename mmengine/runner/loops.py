@@ -306,21 +306,21 @@ class DOSTrainLoop(BaseLoop):
         self.d = [torch.zeros((i, i)) for i in self.samples_per_class]
 
         # for efficiency, so that idx of image in dataloader is stored and not whole image
-        self.batch_idx = [[] for _ in range(self.num_classes)]
+        #self.batch_idx = [[] for _ in range(self.num_classes)]
 
         # store deep features 
-        self.v = [[] for _ in range(self.num_classes)]
+        #self.v = [[] for _ in range(self.num_classes)]
         
         # store the overloaded training samples
         self.z = {'image': [], 'n': [], 'w': []}
 
-        """Pytorchifying 
+        #"""Pytorchifying 
         
         in_dim = self.runner.model.head.in_channels
         self.v = [torch.empty(samples, in_dim) for samples in self.samples_per_class]
         
         self.batch_idx = [torch.empty(samples, 1) for samples in self.samples_per_class]
-        """
+        #"""
 
 
     @property
@@ -345,6 +345,7 @@ class DOSTrainLoop(BaseLoop):
 
     def calc_mutual_distance_matrix(self):
         """calculates mutual distances between every deep feature belonging to the same class"""
+        """
         for h in range(self.num_classes):
             for i in range(self.samples_per_class[h]):
                 for j in range(i, self.samples_per_class[h]):
@@ -352,14 +353,14 @@ class DOSTrainLoop(BaseLoop):
                         self.d[h][i, j] = 99999999
                     self.d[h][i, j] = torch.norm(self.v[h][i] - self.v[h][j])
                     self.d[h][j, i] = self.d[h][i, j]
-
-        """Pytorchifiying: 
+        """
+        #"""Pytorchifiying: 
         for h in range(self.num_classes): 
-            diff = self.v[h][ : , None, : ] - self.v.[h][ None, : , : ]
+            diff = self.v[h][ : , None, : ] - self.v[h][ None, : , : ]
             dist = torch.sqrt(torch.sum(diff ** 2, dim = 2))
             dist.fill_diagonal_(float('inf'))
             self.d[h] = dist
-        """
+        #"""
 
 
 
@@ -368,10 +369,7 @@ class DOSTrainLoop(BaseLoop):
 
         # get deep features
         with torch.no_grad():
-            """Pytorchifying:
-            count = [0 for _ in range(self.num_classes)]
             """
-
             for idx, data_batch in enumerate(self.dataloader):
                 batch = self.runner.model.data_preprocessor(data_batch, True)
                 input = batch['inputs']
@@ -379,8 +377,15 @@ class DOSTrainLoop(BaseLoop):
                 
                 self.v[label].append(self.runner.model.extract_feat(input)[0])
                 self.batch_idx[label].append(idx)
+            """
 
-                """Pytorchifying
+            #"""Pytorchifying:
+            count = [0 for _ in range(self.num_classes)]
+
+            for idx, data_batch in enumerate(self.dataloader):
+                batch = self.runner.model.data_preprocessor(data_batch, True)
+                input = batch['inputs']
+                label = [i.gt_label for i in batch['data_samples']]
                 self.v[label][counter[label]] = self.runner.model.extract_feat(input)[0]
                 self.batch_idx[label][counter[label]] = idx
                 counter[label] += 1
@@ -390,10 +395,12 @@ class DOSTrainLoop(BaseLoop):
                 for label in labels:
                     self.batch_idx[label][counter[label]] = torch.tensor([idx, i])
                 counter[labels] += 1
-                """
+                #"""
+            print(self.v)
 
         # get mutual distance matrix
         self.calc_mutual_distance_matrix()
+        print(self.d)
 
         for i in range(self.num_classes):
             for j in range(self.samples_per_class[i]):
