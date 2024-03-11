@@ -325,7 +325,7 @@ class DOSTrainLoop(BaseLoop):
 
         # store for each image, the deep features (at the right batch and location in the batch )
         #self.n = [torch.empty(self.samples_per_class[i], self.k[i], in_dim) for i in range(self.num_classes)]
-        self.n = [[[torch.empty(self.k[i], in_dim)] for _ in range(self.samples_per_class[i])] for i in range(self.num_classes)]
+        self.n = [[torch.empty(self.k[i], in_dim)] for _ in range(self.samples_per_class[i]) for i in range(self.num_classes)]
         print(self.n) 
         print(len(self.n))
         print(self.n[0])
