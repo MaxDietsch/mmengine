@@ -393,7 +393,6 @@ class DOSTrainLoop(BaseLoop):
                 
                 self.v[label].append(self.runner.model.extract_feat(input)[0])
                 self.batch_idx[label].append(idx)
-                print(idx)
             #"""
 
             """Pytorchifying:
@@ -531,7 +530,6 @@ class DOSTrainLoop(BaseLoop):
                                               optim_wrapper = self.runner.optim_wrapper)
         #"""
         #"""
-        print(idx)
         outputs = self.runner.model.train_step(
             data_batch, 
             self.z['n'][idx], self.z['w'][idx],
