@@ -393,6 +393,7 @@ class DOSTrainLoop(BaseLoop):
                 
                 self.v[label].append(self.runner.model.extract_feat(input)[0])
                 self.batch_idx[label].append(idx)
+                print(idx)
             #"""
 
             """Pytorchifying:
