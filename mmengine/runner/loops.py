@@ -432,7 +432,7 @@ class DOSTrainLoop(BaseLoop):
             
             indices = [torch.topk(self.d[i][j], self.k[i], largest = False).indices for j in range(self.samples_per_class[i])]
             indices = torch.stack(indices, dim = 0)
-            print(indices)
+            #print(indices)
             n = self.v[i][indices]
             #print(n)
             #print(n.shape)
