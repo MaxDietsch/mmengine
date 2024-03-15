@@ -400,6 +400,7 @@ class DOSTrainLoop(BaseLoop):
 
             for idx, data_batch in enumerate(self.dataloader):
                 if idx == 0:
+                    print(data_batch)
                     return data_batch
 
                 batch = self.runner.model.data_preprocessor(data_batch, True)
@@ -508,7 +509,7 @@ class DOSTrainLoop(BaseLoop):
         self.dataloader.sampler.reset_generator(self.seed, self._epoch)
         for idx, data_batch in enumerate(self.dataloader):
             if idx == 0:
-                print(data_batch == b)
+                print(data_batch)
             """maybe batch should be data_batch ???, no data preprocessor gets called in train_step"""
             batch = self.runner.model.data_preprocessor(data_batch, True)
             self.run_iter(idx, data_batch)
