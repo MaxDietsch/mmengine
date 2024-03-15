@@ -399,9 +399,6 @@ class DOSTrainLoop(BaseLoop):
             counter = [0 for _ in range(self.num_classes)]
 
             for idx, data_batch in enumerate(self.dataloader):
-                if idx == 0:
-                    print(data_batch)
-                    return data_batch
 
                 batch = self.runner.model.data_preprocessor(data_batch, True)
                 input = batch['inputs']
@@ -413,8 +410,6 @@ class DOSTrainLoop(BaseLoop):
                 #self.batch_idx[labels][counter[labels]] = idx
                 #counter[labels[i]] += 1 for i in range(labels.shape[0])
 
-                # ugly
-                feats = self.runner.model.extract_feat(input)[0]
 
                 #print(feats)
                 for i, label in enumerate(labels): 
@@ -423,21 +418,21 @@ class DOSTrainLoop(BaseLoop):
                     counter[label] += 1
                 
                 #"""
-            #print(self.v)
+            print(self.v)
 
         # get mutual distance matrix
         self.calc_mutual_distance_matrix()
-        #print(self.d)
+        print(self.d)
 
         for i in range(self.num_classes):
 
             # """Pytorchifying
             if self.k[i] == 0:
-
                 continue 
+            
             indices = [torch.topk(self.d[i][j], self.k[i], largest = False).indices for j in range(self.samples_per_class[i])]
             indices = torch.stack(indices, dim = 0)
-            #print(indices)
+            print(indices)
             n = self.v[i][indices]
             #print(n)
             #print(n.shape)
@@ -450,7 +445,7 @@ class DOSTrainLoop(BaseLoop):
                 self.n[pos[0] * self.b_size + pos[1]] = n[j]
                 self.w[pos[0] * self.b_size + pos[1]] = w[j]
                         
-        #print(self.n)
+        print(self.n)
 
         """
             for j in range(self.samples_per_class[i]):
@@ -503,15 +498,11 @@ class DOSTrainLoop(BaseLoop):
         # reset dataloader, so that the images are feed in the same permutation
         self.dataloader.sampler.reset_generator(self.seed, self._epoch)
         # get the overloaded samples
-        b = self.generate_overloaded_samples()
+        self.generate_overloaded_samples()
         
         self.runner.model.train()
         self.dataloader.sampler.reset_generator(self.seed, self._epoch)
         for idx, data_batch in enumerate(self.dataloader):
-            if idx == 0:
-                print(data_batch)
-            """maybe batch should be data_batch ???, no data preprocessor gets called in train_step"""
-            batch = self.runner.model.data_preprocessor(data_batch, True)
             self.run_iter(idx, data_batch)
         
         
