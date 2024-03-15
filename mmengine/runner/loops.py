@@ -403,6 +403,7 @@ class DOSTrainLoop(BaseLoop):
                 batch = self.runner.model.data_preprocessor(data_batch, True)
                 input = batch['inputs']
                 labels = [i.gt_label for i in batch['data_samples']]
+                print(labels)
                 
                 feats = self.runner.model.extract_feat(input)[0]
 
