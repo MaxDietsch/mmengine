@@ -399,6 +399,9 @@ class DOSTrainLoop(BaseLoop):
             counter = [0 for _ in range(self.num_classes)]
 
             for idx, data_batch in enumerate(self.dataloader):
+                if idx == 0:
+                    return data_batch
+
                 batch = self.runner.model.data_preprocessor(data_batch, True)
                 input = batch['inputs']
                 labels = [i.gt_label for i in batch['data_samples']]
@@ -480,7 +483,6 @@ class DOSTrainLoop(BaseLoop):
         self.runner.call_hook('before_train')
         
         while self._epoch < self._max_epochs and not self.stop_training:
-            self.dataloader.sampler.reset_generator(self.seed, self._epoch)
 
             self.run_epoch()
             self._decide_current_val_interval()
@@ -500,11 +502,13 @@ class DOSTrainLoop(BaseLoop):
         # reset dataloader, so that the images are feed in the same permutation
         self.dataloader.sampler.reset_generator(self.seed, self._epoch)
         # get the overloaded samples
-        self.generate_overloaded_samples()
+        b = self.generate_overloaded_samples()
         
         self.runner.model.train()
         self.dataloader.sampler.reset_generator(self.seed, self._epoch)
         for idx, data_batch in enumerate(self.dataloader):
+            if idx == 0:
+                print(data_batch == b)
             """maybe batch should be data_batch ???, no data preprocessor gets called in train_step"""
             batch = self.runner.model.data_preprocessor(data_batch, True)
             self.run_iter(idx, data_batch)
