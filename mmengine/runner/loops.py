@@ -535,7 +535,7 @@ class DOSTrainLoop(BaseLoop):
             data_batch, 
             self.z['n'][idx], self.z['w'][idx],
             optim_wrapper=self.runner.optim_wrapper)
-        """
+        #"""
 
         self.runner.call_hook(
             'after_train_iter',
