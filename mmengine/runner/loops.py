@@ -305,7 +305,7 @@ class DOSTrainLoop(BaseLoop):
         self.k = k #[0, 3, 2, 1]
 
 
-        #"""Pytorchifying 
+        """Pytorchifying 
         # dimension of deep features
         in_dim = self.runner.model.head.in_channels
 
@@ -325,7 +325,7 @@ class DOSTrainLoop(BaseLoop):
         # do the same for the weights
         self.w = [torch.empty(0, 0) for _ in range(len(self.dataloader.dataset))]
 
-        """
+        #"""
         # store mutual distance matrix
         self.d = [torch.zeros((i, i)) for i in self.samples_per_class]
 
@@ -337,7 +337,7 @@ class DOSTrainLoop(BaseLoop):
         
         # store the overloaded training samples
         self.z = {'image': [], 'n': [], 'w': []}
-        """
+        #"""
 
     @property
     def max_epochs(self):
@@ -361,7 +361,7 @@ class DOSTrainLoop(BaseLoop):
 
     def calc_mutual_distance_matrix(self):
         """calculates mutual distances between every deep feature belonging to the same class"""
-        """
+        #"""
         for h in range(self.num_classes):
             for i in range(self.samples_per_class[h]):
                 for j in range(i, self.samples_per_class[h]):
@@ -369,8 +369,8 @@ class DOSTrainLoop(BaseLoop):
                         self.d[h][i, j] = 99999999
                     self.d[h][i, j] = torch.norm(self.v[h][i] - self.v[h][j])
                     self.d[h][j, i] = self.d[h][i, j]
-        """
-        #"""Pytorchifiying: 
+        #"""
+        """Pytorchifiying: 
         for h in range(self.num_classes): 
             diff = self.v[h][ : , None, : ] - self.v[h][ None, : , : ]
             dist = torch.sqrt(torch.sum(diff ** 2, dim = 2))
@@ -385,7 +385,7 @@ class DOSTrainLoop(BaseLoop):
 
         # get deep features
         with torch.no_grad():
-            """
+            #"""
             for idx, data_batch in enumerate(self.dataloader):
                 batch = self.runner.model.data_preprocessor(data_batch, True)
                 input = batch['inputs']
@@ -393,9 +393,9 @@ class DOSTrainLoop(BaseLoop):
                 
                 self.v[label].append(self.runner.model.extract_feat(input)[0])
                 self.batch_idx[label].append(idx)
-            """
+            #"""
 
-            #"""Pytorchifying:
+            """Pytorchifying:
             counter = [0 for _ in range(self.num_classes)]
 
             for idx, data_batch in enumerate(self.dataloader):
@@ -403,7 +403,7 @@ class DOSTrainLoop(BaseLoop):
                 batch = self.runner.model.data_preprocessor(data_batch, True)
                 input = batch['inputs']
                 labels = [i.gt_label for i in batch['data_samples']]
-                print(labels)
+                #print(labels)
                 
                 feats = self.runner.model.extract_feat(input)[0]
 
@@ -419,7 +419,7 @@ class DOSTrainLoop(BaseLoop):
                     counter[label] += 1
                 
                 #"""
-            print(self.v)
+            #print(self.v)
 
         # get mutual distance matrix
         self.calc_mutual_distance_matrix()
@@ -427,13 +427,13 @@ class DOSTrainLoop(BaseLoop):
 
         for i in range(self.num_classes):
 
-            # """Pytorchifying
+            """Pytorchifying
             if self.k[i] == 0:
                 continue 
             
             indices = [torch.topk(self.d[i][j], self.k[i], largest = False).indices for j in range(self.samples_per_class[i])]
             indices = torch.stack(indices, dim = 0)
-            print(indices)
+            #print(indices)
             n = self.v[i][indices]
             #print(n)
             #print(n.shape)
@@ -445,8 +445,9 @@ class DOSTrainLoop(BaseLoop):
             for j, pos in enumerate(self.batch_idx[i]):
                 self.n[pos[0] * self.b_size + pos[1]] = n[j]
                 self.w[pos[0] * self.b_size + pos[1]] = w[j]
+            #
                         
-        print(self.n)
+        #print(self.n)
 
         """
             for j in range(self.samples_per_class[i]):
@@ -471,7 +472,7 @@ class DOSTrainLoop(BaseLoop):
         # zero out big variables for next iterations
         self.v = [[] for _ in range(self.num_classes)]
         self.batch_idx = [[] for _ in range(self.num_classes)]
-        """
+        #"""
 
 
 
@@ -521,18 +522,19 @@ class DOSTrainLoop(BaseLoop):
         # Enable gradient accumulation mode and avoid unnecessary gradient
         # synchronization during gradient accumulation process.
         # outputs should be a dict of loss.
-
+        
+        """Pytorchifying
         outputs = self.runner.model.train_step(data_batch, 
                                               self.n[idx * self.b_size : (idx + 1) * self.b_size],
                                               self.w[idx * self.b_size : (idx + 1) * self.b_size],
                                               optim_wrapper = self.runner.optim_wrapper)
-
-        """
+        #"""
+        #"""
         outputs = self.runner.model.train_step(
             data_batch, 
             self.z['n'][idx], self.z['w'][idx],
             optim_wrapper=self.runner.optim_wrapper)
-        """
+        #"""
 
         self.runner.call_hook(
             'after_train_iter',
