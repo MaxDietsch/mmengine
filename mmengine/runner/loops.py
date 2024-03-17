@@ -460,7 +460,6 @@ class DOSTrainLoop(BaseLoop):
             indices = torch.stack(indices, dim = 0)
             #print(indices)
             n = self.v[i][indices]
-            print(n)
             #print(n)
             #print(n.shape)
             #print(self.n[i].shape)
