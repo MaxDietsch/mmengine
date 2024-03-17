@@ -369,7 +369,7 @@ class DOSTrainLoop(BaseLoop):
 
     def calc_mutual_distance_matrix(self):
         """calculates mutual distances between every deep feature belonging to the same class"""
-        #"""
+        """
         for h in range(self.num_classes):
             for i in range(self.samples_per_class[h]):
                 for j in range(i, self.samples_per_class[h]):
@@ -380,9 +380,6 @@ class DOSTrainLoop(BaseLoop):
                     self.d[h][j, i] = self.d[h][i, j]
         #"""
 
-        print(self.d)
-        x = self.d
-
         #"""Pytorchifiying: 
         for h in range(self.num_classes): 
             diff = self.v[h][ : , None, : ] - self.v[h][ None, : , : ]
@@ -390,9 +387,6 @@ class DOSTrainLoop(BaseLoop):
             dist.fill_diagonal_(float('inf'))
             self.d[h] = dist
         #"""
-        print(self.d)
-        y = self.d
-        print(x == y)
 
 
     def generate_overloaded_samples(self):
@@ -454,11 +448,11 @@ class DOSTrainLoop(BaseLoop):
 
         # get mutual distance matrix
         self.calc_mutual_distance_matrix()
-        print(self.d)
+        #print(self.d)
 
         for i in range(self.num_classes):
 
-            """Pytorchifying
+            #"""Pytorchifying
             if self.k[i] == 0:
                 continue 
             
@@ -466,6 +460,7 @@ class DOSTrainLoop(BaseLoop):
             indices = torch.stack(indices, dim = 0)
             #print(indices)
             n = self.v[i][indices]
+            print(n)
             #print(n)
             #print(n.shape)
             #print(self.n[i].shape)
@@ -473,31 +468,33 @@ class DOSTrainLoop(BaseLoop):
             w = (torch.abs(torch.randn(self.samples_per_class[i], self.r[i], self.k[i]))).to(torch.device("cuda"))
             w /= torch.linalg.norm(w, ord = 1, dim=2, keepdim = True)
 
-            for j, pos in enumerate(self.batch_idx[i]):
-                self.n[pos[0] * self.b_size + pos[1]] = n[j]
-                self.w[pos[0] * self.b_size + pos[1]] = w[j]
+            #for j, pos in enumerate(self.batch_idx[i]):
+                #self.n[pos[0] * self.b_size + pos[1]] = n[j]
+                #self.w[pos[0] * self.b_size + pos[1]] = w[j]
             #
                         
         #print(self.n)
 
-        """
+        #"""
+            test_n = []
             for j in range(self.samples_per_class[i]):
                 n = []
                 # get deep features with shortest distance to feature vector with batch index of batch_idx[i][j]
                 for x in torch.topk(self.d[i][j], self.k[i], largest = False).indices:
                     n.append(self.v[i][x])
+                test_n.append(n)
                 
                 # sample weight vectors
                 w = (torch.abs(torch.randn(self.r[i], self.k[i]))).to(torch.device("cuda"))
-                w /= torch.norm(w, dim=1, keepdim = True)
+                w /= torch.norm(w, ord = 1, dim=1, keepdim = True)
                 
                 # define overloaded sample
                 self.z['image'].append(self.batch_idx[i][j])
                 self.z['n'].append(n)
                 self.z['w'].append(w)
             
-            #print(n2)
-            #print(n)
+            print(n)
+            print(test_n)
             #print (n2 == n)
         
         # zero out big variables for next iterations
