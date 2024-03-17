@@ -498,8 +498,8 @@ class DOSTrainLoop(BaseLoop):
         #print(n_p)
         #print(n_n)
         for i in range(len(n_p)):
-            for k in range(self.samples_per_class[i]):
-                for j in range(self.k[i]):
+            for k in range(len(n_p[0])):
+                for j in range(len(n_p[0][0])):
                     print(n_p[i][k][j] == n_n[i][k][j])
                     
             #print (n2 == n)
