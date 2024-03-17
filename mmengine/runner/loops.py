@@ -326,13 +326,19 @@ class DOSTrainLoop(BaseLoop):
         self.w = [torch.empty(0, 0) for _ in range(len(self.dataloader.dataset))]
 
         #"""
+
+        in_dim = self.runner.model.head.in_channels
+
         # store mutual distance matrix
         self.d = [torch.zeros((i, i)) for i in self.samples_per_class]
 
         # for efficiency, so that idx of image in dataloader is stored and not whole image
         self.batch_idx = [[] for _ in range(self.num_classes)]
+        self.batch_idx = [torch.zeros((samples, 1), dtype = torch.int) for samples in self.samples_per_class]
 
-        # store deep features 
+
+        # store deep features
+
         self.v = [[] for _ in range(self.num_classes)]
         self.v = [torch.empty((samples, in_dim), device = torch.device("cuda")) for samples in self.samples_per_class]
 
