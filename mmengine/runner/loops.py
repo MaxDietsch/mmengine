@@ -503,8 +503,8 @@ class DOSTrainLoop(BaseLoop):
             for j in range(len(n_p[i])):
                 assert len(n_p[i][j]) == len(n_n[i][j]), 'second length not identical'
                 for l in range(len(n_p[i][j])):
-                    print(torch.eq(n_p[i][j][l], n_n[i][j][l]))
-                    assert torch.eq(n_p[i][j][l], n_n[i][j][l]), 'not identical elements'
+                    print(torch.all(torch.eq(n_p[i][j][l], n_n[i][j][l])))
+                    assert torch.all(torch.eq(n_p[i][j][l], n_n[i][j][l])), 'not identical elements'
                     
             #print (n2 == n)
         
