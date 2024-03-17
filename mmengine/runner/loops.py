@@ -574,9 +574,10 @@ class DOSTrainLoop(BaseLoop):
         #"""
         
         #"""Pytorchifying:
+        label = data_batch['data_samples'][0].gt_label
         outputs = self.runner.model.train_step(
             data_batch, 
-            self.n[idx], self.w[idx],
+            self.n[label][idx], self.w[label][idx],
             optim_wrapper=self.runner.optim_wrapper)
         #"""
 
