@@ -577,8 +577,8 @@ class DOSTrainLoop(BaseLoop):
             n = self.n[idx]
             w = self.w[idx]
         else:
-            n = torch.empty(1, 1)
-            w = torch.empty(1, 1)
+            n = torch.empty(0, 0)
+            w = torch.empty(0, 0)
         outputs = self.runner.model.train_step(
             data_batch, 
             n, w,
