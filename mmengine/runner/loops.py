@@ -486,7 +486,7 @@ class DOSTrainLoop(BaseLoop):
                 
                 # sample weight vectors
                 w = (torch.abs(torch.randn(self.r[i], self.k[i]))).to(torch.device("cuda"))
-                w /= torch.norm(w, ord = 1, dim=1, keepdim = True)
+                w /= torch.linalg.norm(w, ord = 1, dim=1, keepdim = True)
                 
                 # define overloaded sample
                 self.z['image'].append(self.batch_idx[i][j])
