@@ -404,6 +404,8 @@ class DOSTrainLoop(BaseLoop):
             #"""
 
             #"""Pytorchifying
+            counter = [0 for _ in range(self.num_classes)]
+
             for idx, data_batch in enumerate(self.dataloader):
                 batch = self.runner.model.data_preprocessor(data_batch, True)
                 input = batch['inputs']
