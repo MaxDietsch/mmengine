@@ -378,7 +378,8 @@ class DOSTrainLoop(BaseLoop):
                     self.d[h][i, j] = torch.norm(self.v[h][i] - self.v[h][j])
                     self.d[h][j, i] = self.d[h][i, j]
         #"""
-        """Pytorchifiying: 
+
+        #"""Pytorchifiying: 
         for h in range(self.num_classes): 
             diff = self.v[h][ : , None, : ] - self.v[h][ None, : , : ]
             dist = torch.sqrt(torch.sum(diff ** 2, dim = 2))
@@ -413,6 +414,7 @@ class DOSTrainLoop(BaseLoop):
 
                 self.v[label][counter[label]] = (self.runner.model.extract_feat(input)[0])
                 self.batch_idx[label][counter[label]] = (idx)
+                counter[label] += 1
             #"""
 
 
@@ -441,12 +443,12 @@ class DOSTrainLoop(BaseLoop):
                     counter[label] += 1
                 
                 #"""
-            print(self.v)
+            #print(self.v)
 
 
         # get mutual distance matrix
         self.calc_mutual_distance_matrix()
-        #print(self.d)
+        print(self.d)
 
         for i in range(self.num_classes):
 
