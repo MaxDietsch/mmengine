@@ -503,8 +503,6 @@ class DOSTrainLoop(BaseLoop):
             for j in range(len(n_p[i])):
                 assert len(n_p[i][j]) == len(n_n[i][j]), 'second length not identical'
                 for l in range(len(n_p[i][j])):
-                    print(n_p[i][j][l])
-                    print(n_n[i][j][l])
                     print(n_p[i][j][l] == n_n[i][j][l])
                     
             #print (n2 == n)
