@@ -441,7 +441,8 @@ class DOSTrainLoop(BaseLoop):
                     counter[label] += 1
                 
                 #"""
-            #print(self.v)
+            print(self.v)
+
 
         # get mutual distance matrix
         self.calc_mutual_distance_matrix()
