@@ -469,6 +469,7 @@ class DOSTrainLoop(BaseLoop):
             w = (torch.abs(torch.randn(self.samples_per_class[i], self.r[i], self.k[i]))).to(torch.device("cuda"))
             w /= torch.linalg.norm(w, ord = 1, dim=2, keepdim = True)
             
+            print(indices)
             for ind in indices:
                 self.n[self.batch_idx[i][ind]] = n[i]
             #self.n[self.batch_idx[i][indices]] = n
@@ -575,7 +576,7 @@ class DOSTrainLoop(BaseLoop):
         #"""
         
         #"""Pytorchifying:
-        print(self.n)
+        #print(self.n)
         label = data_batch['data_samples'][0].gt_label
         if self.k[label] != 0:
             n = self.n[idx]
