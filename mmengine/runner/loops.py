@@ -573,7 +573,7 @@ class DOSTrainLoop(BaseLoop):
         #"""
         
         #"""Pytorchifying:
-        if idx in self.n.keys:
+        if idx in self.n.keys():
             n = self.n[idx]
             w = self.w[idx]
         else:
