@@ -334,6 +334,8 @@ class DOSTrainLoop(BaseLoop):
 
         # store deep features 
         self.v = [[] for _ in range(self.num_classes)]
+        self.v = [torch.empty((samples, in_dim), device = torch.device("cuda")) for samples in self.samples_per_class]
+
         
         # store the overloaded training samples
         self.z = {'image': [], 'n': [], 'w': []}
@@ -385,7 +387,7 @@ class DOSTrainLoop(BaseLoop):
 
         # get deep features
         with torch.no_grad():
-            #"""
+            """
             for idx, data_batch in enumerate(self.dataloader):
                 batch = self.runner.model.data_preprocessor(data_batch, True)
                 input = batch['inputs']
@@ -394,6 +396,18 @@ class DOSTrainLoop(BaseLoop):
                 self.v[label].append(self.runner.model.extract_feat(input)[0])
                 self.batch_idx[label].append(idx)
             #"""
+
+            #"""Pytorchifying
+            for idx, data_batch in enumerate(self.dataloader):
+                batch = self.runner.model.data_preprocessor(data_batch, True)
+                input = batch['inputs']
+                label = batch['data_samples'][0].gt_label
+
+                self.v[label][counter[label]] = (self.runner.model.extract_feat(input)[0])
+                self.batch_idx[label][counter[label]] = (idx)
+            #"""
+
+
 
             """Pytorchifying:
             counter = [0 for _ in range(self.num_classes)]
