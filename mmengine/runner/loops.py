@@ -572,7 +572,15 @@ class DOSTrainLoop(BaseLoop):
                                               self.w[idx * self.b_size : (idx + 1) * self.b_size],
                                               optim_wrapper = self.runner.optim_wrapper)
         #"""
+        
+        #"""Pytorchifying:
+        outputs = self.runner.model.train_step(
+            data_batch, 
+            self.n[idx], self.w[idx],
+            optim_wrapper=self.runner.optim_wrapper)
         #"""
+
+        """
         outputs = self.runner.model.train_step(
             data_batch, 
             self.z['n'][idx], self.z['w'][idx],
