@@ -481,6 +481,7 @@ class DOSTrainLoop(BaseLoop):
                 # get deep features with shortest distance to feature vector with batch index of batch_idx[i][j]
                 for x in torch.topk(self.d[i][j], self.k[i], largest = False).indices:
                     n.append(self.v[i][x])
+                test_n.append(n)
                 
                 # sample weight vectors
                 w = (torch.abs(torch.randn(self.r[i], self.k[i]))).to(torch.device("cuda"))
@@ -492,7 +493,7 @@ class DOSTrainLoop(BaseLoop):
                 self.z['w'].append(w)
             
             print(n)
-            print(torch.tensor(test_n))
+            print(test_n)
             #print (n2 == n)
         
         # zero out big variables for next iterations
