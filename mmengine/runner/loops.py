@@ -341,7 +341,7 @@ class DOSTrainLoop(BaseLoop):
 
         self.v = [[] for _ in range(self.num_classes)]
         self.v = [torch.empty((samples, in_dim), device = torch.device("cuda")) for samples in self.samples_per_class]
-
+        self.n = [torch.empty((samples, self.k[i], in_dim)) for i, samples in enumerate(self.samples_per_class)]
         
         # store the overloaded training samples
         self.z = {'image': [], 'n': [], 'w': []}
@@ -461,14 +461,17 @@ class DOSTrainLoop(BaseLoop):
             indices = torch.stack(indices, dim = 0)
             #print(indices)
             n = self.v[i][indices]
-            n_p.append(n)
+            
             #print(n)
             #print(n.shape)
             #print(self.n[i].shape)
             
             w = (torch.abs(torch.randn(self.samples_per_class[i], self.r[i], self.k[i]))).to(torch.device("cuda"))
             w /= torch.linalg.norm(w, ord = 1, dim=2, keepdim = True)
-
+            
+            print(self.n[i].shape)
+            print(n.shape)
+            self.n[i] = n
             #for j, pos in enumerate(self.batch_idx[i]):
                 #self.n[pos[0] * self.b_size + pos[1]] = n[j]
                 #self.w[pos[0] * self.b_size + pos[1]] = w[j]
@@ -476,7 +479,7 @@ class DOSTrainLoop(BaseLoop):
                         
         #print(self.n)
 
-        #"""
+        """
             test_n = []
             for j in range(self.samples_per_class[i]):
                 n = []
@@ -497,15 +500,16 @@ class DOSTrainLoop(BaseLoop):
             
         #print(n_p)
         #print(n_n)
+        
         assert len(n_p) == len(n_n), 'zeroth length not identical'
         for i in range(len(n_p)):
             assert len(n_p[i]) == len(n_n[i]), 'first length not identical'
             for j in range(len(n_p[i])):
                 assert len(n_p[i][j]) == len(n_n[i][j]), 'second length not identical'
                 for l in range(len(n_p[i][j])):
-                    print(torch.all(torch.eq(n_p[i][j][l], n_n[i][j][l])))
+                    #print(torch.all(torch.eq(n_p[i][j][l], n_n[i][j][l])))
                     assert torch.all(torch.eq(n_p[i][j][l], n_n[i][j][l])), 'not identical elements'
-                    
+                   
             #print (n2 == n)
         
         # zero out big variables for next iterations
