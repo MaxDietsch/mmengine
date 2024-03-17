@@ -375,11 +375,13 @@ class DOSTrainLoop(BaseLoop):
                 for j in range(i, self.samples_per_class[h]):
                     if i == j:
                         self.d[h][i, j] = float('inf')
+                        continue
                     self.d[h][i, j] = torch.norm(self.v[h][i] - self.v[h][j])
                     self.d[h][j, i] = self.d[h][i, j]
         #"""
 
         print(self.d)
+        x = self.d
 
         #"""Pytorchifiying: 
         for h in range(self.num_classes): 
@@ -389,6 +391,8 @@ class DOSTrainLoop(BaseLoop):
             self.d[h] = dist
         #"""
         print(self.d)
+        y = self.d
+        print(x == y)
 
 
     def generate_overloaded_samples(self):
