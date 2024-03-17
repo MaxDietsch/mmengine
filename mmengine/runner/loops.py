@@ -498,7 +498,7 @@ class DOSTrainLoop(BaseLoop):
         #print(n_p)
         #print(n_n)
         for i in range(self.num_classes - 1):
-            for k in range(self.samples_per_cass[i]):
+            for k in range(self.samples_per_class[i]):
                 for j in range(self.k[i]):
                     print(n_p[i][k][j])
                     print(n_n[i][k][j])
