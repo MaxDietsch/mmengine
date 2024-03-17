@@ -455,8 +455,6 @@ class DOSTrainLoop(BaseLoop):
 
             #"""Pytorchifying
             if self.k[i] == 0:
-                self.n[self.batch_idx[i][indices]] = torch.empty((0, 0))
-                self.w[self.batch_idx[i][indices]] = torch.empty((0, 0))
                 continue
 
             indices = [torch.topk(self.d[i][j], self.k[i], largest = False).indices for j in range(self.samples_per_class[i])]
@@ -575,11 +573,16 @@ class DOSTrainLoop(BaseLoop):
         #"""
         
         #"""Pytorchifying:
-        label = data_batch['data_samples'][0].gt_label
+        if idx in self.n.keys:
+            n = self.n[idx]
+            w = self.w[idx]
+        else:
+            n = torch.empty(1, 1)
+            w = torch.empty(1, 1)
         outputs = self.runner.model.train_step(
             data_batch, 
-            self.n[idx], self.w[idx],
-            optim_wrapper=self.runner.optim_wrapper)
+            n, w,
+            optim_wrapper=self.runner.optim_wrapper) 
         #"""
 
         """
