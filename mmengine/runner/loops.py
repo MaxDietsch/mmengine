@@ -493,13 +493,13 @@ class DOSTrainLoop(BaseLoop):
                 self.z['image'].append(self.batch_idx[i][j])
                 self.z['n'].append(n)
                 self.z['w'].append(w)
-            n_t.append(test_n)
+            n_n.append(test_n)
             
-        print(n_p)
-        print(n_t)
+        #print(n_p)
+        #print(n_n)
         for i in range(self.num_classes):
             for j in range(self.sampels_per_class[i]):
-                print(n_p[i][j] == n_t[i][j])
+                print(n_p[i][j] == n_n[i][j])
             #print (n2 == n)
         
         # zero out big variables for next iterations
