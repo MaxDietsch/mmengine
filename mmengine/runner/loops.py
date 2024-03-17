@@ -494,7 +494,7 @@ class DOSTrainLoop(BaseLoop):
                 self.z['w'].append(w)
             
             print(n)
-            print(test_n)
+            print(torch.tensor(test_n))
             #print (n2 == n)
         
         # zero out big variables for next iterations
