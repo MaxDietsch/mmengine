@@ -334,7 +334,7 @@ class DOSTrainLoop(BaseLoop):
 
         # for efficiency, so that idx of image in dataloader is stored and not whole image
         self.batch_idx = [[] for _ in range(self.num_classes)]
-        self.batch_idx = [torch.zeros((samples, 1), dtype = torch.int) for samples in self.samples_per_class]
+        self.batch_idx = [torch.zeros((samples, 1), device = torch.device("cuda"), dtype = torch.int) for samples in self.samples_per_class]
 
 
         # store deep features
