@@ -342,7 +342,8 @@ class DOSTrainLoop(BaseLoop):
         self.v = [[] for _ in range(self.num_classes)]
         self.v = [torch.empty((samples, in_dim), device = torch.device("cuda")) for samples in self.samples_per_class]
         self.n = [torch.empty((samples, self.k[i], in_dim)) for i, samples in enumerate(self.samples_per_class)]
-        
+        self.w = [torch.empty((samples, self.r[i], self.k[i])) for i, samples in enumerate(self.samples_per_class)]
+   
         # store the overloaded training samples
         self.z = {'image': [], 'n': [], 'w': []}
         #"""
@@ -469,9 +470,8 @@ class DOSTrainLoop(BaseLoop):
             w = (torch.abs(torch.randn(self.samples_per_class[i], self.r[i], self.k[i]))).to(torch.device("cuda"))
             w /= torch.linalg.norm(w, ord = 1, dim=2, keepdim = True)
             
-            print(self.n[i].shape)
-            print(n.shape)
             self.n[i] = n
+            self.w[i] = w
             #for j, pos in enumerate(self.batch_idx[i]):
                 #self.n[pos[0] * self.b_size + pos[1]] = n[j]
                 #self.w[pos[0] * self.b_size + pos[1]] = w[j]
