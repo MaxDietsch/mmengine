@@ -472,7 +472,7 @@ class DOSTrainLoop(BaseLoop):
             w /= torch.linalg.norm(w, ord = 1, dim=2, keepdim = True)
             
             for i, ind in enumerate(indices):
-                #print(ind)
+                print(ind)
                 #print(n[i][1 : ].shape)
                 self.n[self.batch_idx[i][ind[0]]] = n[i][1 : ]
                 self.w[self.batch_idx[i][ind[0]]] = w[i]
