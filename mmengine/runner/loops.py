@@ -448,7 +448,7 @@ class DOSTrainLoop(BaseLoop):
 
         # get mutual distance matrix
         self.calc_mutual_distance_matrix()
-        #print(self.d)
+        print(self.d)
         n_p = []
         n_n = []
         for i in range(self.num_classes):
@@ -472,7 +472,7 @@ class DOSTrainLoop(BaseLoop):
             w /= torch.linalg.norm(w, ord = 1, dim=2, keepdim = True)
             
             for i, ind in enumerate(indices):
-                print(ind.shape)
+                print(ind)
                 self.n[ind[0]] = n[i]
             #self.n[self.batch_idx[i][indices]] = n
             self.w[self.batch_idx[i][indices]] = w
