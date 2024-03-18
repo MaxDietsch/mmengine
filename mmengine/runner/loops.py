@@ -475,8 +475,8 @@ class DOSTrainLoop(BaseLoop):
             for j, ind in enumerate(indices):
                 #print(ind)
                 #print(n[i][1 : ].shape)
-                self.n[self.batch_idx[i][ind[0]].item] = n[j][1 : ]
-                self.w[self.batch_idx[i][ind[0]].item] = w[j]
+                self.n[self.batch_idx[i][ind[0]].item()] = n[j][1 : ]
+                self.w[self.batch_idx[i][ind[0]].item()] = w[j]
             print(self.n.keys())
 
             #for j, pos in enumerate(self.batch_idx[i]):
@@ -582,15 +582,16 @@ class DOSTrainLoop(BaseLoop):
         
         #"""Pytorchifying:
         label = data_batch['data_samples'][0].gt_label
+        """
         if self.k[label] != 0:
-            print(idx)
             n_i = self.n[idx]
             w_i = self.w[idx]
         else: 
             n_i = torch.empty(0, 0)
             w_i = torch.empty(0, 0)
-        #n_i = self.n[idx] if self.k[label] != 0 else torch.empty(0, 0)
-        #w_i = self.w[idx] if self.k[label] != 0 else torch.empty(0, 0)
+        """
+        n_i = self.n[idx] if self.k[label] != 0 else torch.empty(0, 0)
+        w_i = self.w[idx] if self.k[label] != 0 else torch.empty(0, 0)
         outputs = self.runner.model.train_step(
             data_batch, 
             n_i, w_i,
