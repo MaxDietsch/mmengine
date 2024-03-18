@@ -412,7 +412,6 @@ class DOSTrainLoop(BaseLoop):
                 input = batch['inputs']
                 label = batch['data_samples'][0].gt_label
                 
-                print(input.shape)
                 self.v[label][counter[label]] = (self.runner.model.extract_feat(input)[0])
                 self.batch_idx[label][counter[label]] = idx
                 counter[label] += 1
