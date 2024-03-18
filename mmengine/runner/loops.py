@@ -473,8 +473,8 @@ class DOSTrainLoop(BaseLoop):
             
             for i, ind in enumerate(indices):
                 #print(ind)
-                print(n[i].shape)
-                self.n[ind[0]] = n[i]
+                print(n[i][1 : ].shape)
+                self.n[ind[0]] = n[i][1 : , : ]
             #self.n[self.batch_idx[i][indices]] = n
             self.w[self.batch_idx[i][indices]] = w
             #for j, pos in enumerate(self.batch_idx[i]):
