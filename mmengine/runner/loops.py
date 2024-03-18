@@ -334,7 +334,6 @@ class DOSTrainLoop(BaseLoop):
 
         # for efficiency, so that idx of image in dataloader is stored and not whole image
         self.batch_idx = [[] for _ in range(self.num_classes)]
-        print(self.samples_per_class)
         self.batch_idx = [torch.zeros((samples,), device = torch.device("cuda"), dtype = torch.int) for samples in self.samples_per_class]
 
 
@@ -476,6 +475,8 @@ class DOSTrainLoop(BaseLoop):
             for i, ind in enumerate(indices):
                 print(ind)
                 #print(n[i][1 : ].shape)
+                print(i)
+                print(self.batch_idx[i])
                 self.n[self.batch_idx[i][ind[0]]] = n[i][1 : ]
                 self.w[self.batch_idx[i][ind[0]]] = w[i]
 
