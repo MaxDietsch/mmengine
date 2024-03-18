@@ -582,6 +582,7 @@ class DOSTrainLoop(BaseLoop):
         #"""Pytorchifying:
         label = data_batch['data_samples'][0].gt_label
         if self.k[label] != 0:
+            print(idx)
             n_i = self.n[idx]
             w_i = self.w[idx]
         else: 
