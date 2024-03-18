@@ -384,7 +384,7 @@ class DOSTrainLoop(BaseLoop):
         for h in range(self.num_classes): 
             diff = self.v[h][ : , None, : ] - self.v[h][ None, : , : ]
             dist = torch.sqrt(torch.sum(diff ** 2, dim = 2))
-            dist.fill_diagonal_(float('inf'))
+            #dist.fill_diagonal_(float('inf'))
             self.d[h] = dist
         #"""
 
@@ -458,8 +458,11 @@ class DOSTrainLoop(BaseLoop):
                 continue
 
             indices = [torch.topk(self.d[i][j], self.k[i], largest = False).indices for j in range(self.samples_per_class[i])]
+            indices = [torch.topk(self.d[i][j], self.k[i] + 1, largest = False).indices for j in range(self.samples_per_class[i])]
             indices = torch.stack(indices, dim = 0)
-            #print(indices)
+            indices = torch.stack(indices, dim = 0)
+            print(indices.shape)
+
             n = self.v[i][indices]
             
             #print(n)
@@ -469,9 +472,9 @@ class DOSTrainLoop(BaseLoop):
             w = (torch.abs(torch.randn(self.samples_per_class[i], self.r[i], self.k[i]))).to(torch.device("cuda"))
             w /= torch.linalg.norm(w, ord = 1, dim=2, keepdim = True)
             
-            print(indices)
-            for ind in indices:
-                self.n[self.batch_idx[i][ind]] = n[i]
+            for i, ind in enumerate(indices):
+                print(ind.shape)
+                self.n[ind[0]] = n[i]
             #self.n[self.batch_idx[i][indices]] = n
             self.w[self.batch_idx[i][indices]] = w
             #for j, pos in enumerate(self.batch_idx[i]):

@@ -232,7 +232,7 @@ class DynamicSampler(Sampler):
                 start_idx = end_idx
 
         print(f"current distribution of samples from the dataset is : {counts}")
-        print(f'current samples size is: {self.sample_size}')
+        #print(f'current samples size is: {self.sample_size}')
 
         # deterministically shuffle based on epoch and seed
         if self.shuffle:
