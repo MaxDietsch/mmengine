@@ -581,8 +581,14 @@ class DOSTrainLoop(BaseLoop):
         
         #"""Pytorchifying:
         label = data_batch['data_samples'][0].gt_label
-        n_i = self.n[idx] if self.k[label] != 0 else torch.empty(0, 0)
-        w_i = self.w[idx] if self.k[label] != 0 else torch.empty(0, 0)
+        if self.k[label] != 0:
+            n_i = self.n[idx]
+            w_i = self.w[idx]
+        else: 
+            n_i = torch.empty(0, 0)
+            w_i = torch.empty(0, 0)
+        #n_i = self.n[idx] if self.k[label] != 0 else torch.empty(0, 0)
+        #w_i = self.w[idx] if self.k[label] != 0 else torch.empty(0, 0)
         outputs = self.runner.model.train_step(
             data_batch, 
             n_i, w_i,
