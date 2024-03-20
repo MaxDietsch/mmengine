@@ -58,7 +58,7 @@ def get_sampling_probabilities(class_count, mode='instance'):
     sampling_probabilities = relative_freq ** (-1)
 
  # modify dataloader so that it samples based on probabilities
-def modify_loader(loader, mode, samples_per_class):
+def modify_loader(loader, samples_per_class, mode):
     class_count = samples_per_class
     sampling_probs = get_sampling_probabilities(class_count, mode=mode)
     
@@ -77,7 +77,7 @@ def modify_loader(loader, mode, samples_per_class):
 # get combo loader consisting of instance based sampling and class based sampling 
 def get_combo_loader(loader, samples_per_class):
     imbalanced_loader = loader
-    balanced_loader = modify_loader(loader, mode='class', samples_per_class)
+    balanced_loader = modify_loader(loader, samples_per_class, mode = 'class')
 
     combo_loader = ComboLoader([imbalanced_loader, balanced_loader])
     return combo_loader
