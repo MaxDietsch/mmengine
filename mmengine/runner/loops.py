@@ -277,6 +277,7 @@ class BalancedMixUpTrainLoop(BaseLoop):
 
 
         # BalancedMixUp
+        print(samples_per_class)
         self.combo_loader = get_combo_loader(self.dataloader, torch.tensor(samples_per_class))
         print('combo_loader:')
         print(self.combo_loader)

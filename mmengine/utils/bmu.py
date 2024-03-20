@@ -63,7 +63,7 @@ def modify_loader(loader, samples_per_class, mode):
     sampling_probs = get_sampling_probabilities(class_count, mode=mode)
     
     dr = []
-    for count, value in class_count:
+    for count, value in enumerate(class_count):
         dr.append(torch.full((count,), value))  
     dr = torch.cat(dr)
 
