@@ -21,6 +21,7 @@ import torch.nn.functional as F
 import heapq
 import math
 from mmengine.utils.bmu import get_combo_loader
+from mmpretrain.runner.runner import Runner
 
 
 
@@ -281,6 +282,22 @@ class BalancedMixUpTrainLoop(BaseLoop):
         # combo loader has a list where first element is dataloader for instance based sampling
         #                               second element is dataloader for class based sampling
         self.combo_loader = get_combo_loader(self.dataloader, torch.tensor(samples_per_class))
+        train_dataloader = dict(
+            batch_size=1,
+            num_workers=5,
+            dataset=dict(
+                type=dataset_type,
+                data_root='../../B_E_P_N',
+                ann_file='meta/train.txt',
+                data_prefix='train',
+                with_label=True,
+                classes=['normal', 'polyps', 'barretts', 'esophagitis'],
+                pipeline=train_pipeline),
+            sampler=dict(type='DefaultSampler', shuffle=True),
+            persistent_workers=True,
+        )
+
+        sec = Runner.build_dataloader(train_dataloader)
 
     @property
     def max_epochs(self):
