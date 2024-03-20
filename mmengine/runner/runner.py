@@ -47,7 +47,7 @@ from .checkpoint import (_load_checkpoint, _load_checkpoint_to_model,
                          find_latest_checkpoint, save_checkpoint,
                          weights_to_cpu)
 from .log_processor import LogProcessor
-from .loops import EpochBasedTrainLoop, IterBasedTrainLoop, TestLoop, ValLoop, DOSTrainLoop, CoSenTrainLoop, HardSamplingBasedTrainLoop
+from .loops import EpochBasedTrainLoop, IterBasedTrainLoop, TestLoop, ValLoop, BalancedMixUpTrainLoop, DOSTrainLoop, CoSenTrainLoop, HardSamplingBasedTrainLoop
 from .priority import Priority, get_priority
 from .utils import _get_batch_size, set_random_seed
 
@@ -766,8 +766,7 @@ class Runner:
             message_hub.setdefault('name', self._experiment_name)
         else:
             raise TypeError(
-                f'message_hub should be dict or None, but got {message_hub}')
-
+                f'message_hub should be dict or None, but got {message_hub}') 
         return MessageHub.get_instance(**message_hub)
 
     def build_visualizer(
@@ -1523,7 +1522,9 @@ class Runner:
                     runner=self, dataloader=self._train_dataloader))
         else:
             by_epoch = loop_cfg.pop('by_epoch')
-            if by_epoch == 4:
+            if by_epoch == 5: 
+                loop = BalancedMixUpTrainLoop(**loop_cfg, runner = self, dataloader=self._train_dataloader)
+            elif by_epoch == 4:
                 loop = HardSamplingBasedTrainLoop(**loop_cfg, runner = self, dataloader=self._train_dataloader)
             elif by_epoch == 3:
                 loop = CoSenTrainLoop(**loop_cfg, runner = self, dataloader=self._train_dataloader)
