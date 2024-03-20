@@ -110,9 +110,7 @@ class BaseModel(BaseModule):
         """
         # Enable automatic mixed precision training context.
         with optim_wrapper.optim_context(self):
-            print(data)
             data = self.data_preprocessor(data, True)
-            print(data)
             losses = self._run_forward(data, mode='loss')  # type: ignore
         parsed_losses, log_vars = self.parse_losses(losses)  # type: ignore
         optim_wrapper.update_params(parsed_losses)
