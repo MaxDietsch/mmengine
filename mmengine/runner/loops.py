@@ -441,7 +441,7 @@ class BalancedMixUpTrainLoop(BaseLoop):
             batch_size=1,
             num_workers=5,
             dataset=dict(
-                type=dataset_type,
+                type='CustomDataset',
                 data_root='../../B_E_P_N',
                 ann_file='meta/train.txt',
                 data_prefix='train',
@@ -452,7 +452,8 @@ class BalancedMixUpTrainLoop(BaseLoop):
             persistent_workers=True,
         )
 
-        sec = Runner.build_dataloader(train_dataloader)
+        sec = build_dataloader(train_dataloader)
+        print(sec)
 
     @property
     def max_epochs(self):
