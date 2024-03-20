@@ -6,6 +6,7 @@ class ComboIter(object):
     """An iterator."""
     def __init__(self, my_loader):
         self.my_loader = my_loader
+        print(my_loaders.loaders)
         self.loader_iters = [iter(loader) for loader in self.my_loader.loaders]
 
     def __iter__(self):
