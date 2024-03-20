@@ -58,8 +58,6 @@ class BaseDataPreprocessor(nn.Module):
         elif isinstance(data, Sequence):
             return type(data)(self.cast_data(sample) for sample in data)  # type: ignore  # noqa: E501  # yapf:disable
         elif isinstance(data, (torch.Tensor, BaseDataElement)):
-            print("basedataelement")
-            print(data)
             return data.to(self.device, non_blocking=self._non_blocking)
         else:
             return data
@@ -78,6 +76,7 @@ class BaseDataPreprocessor(nn.Module):
         Returns:
             dict or list: Data in the same format as the model input.
         """
+        print(data)
         return self.cast_data(data)  # type: ignore
 
     @property
