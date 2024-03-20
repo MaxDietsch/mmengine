@@ -13,8 +13,6 @@ from .amp import autocast
 from .base_loop import BaseLoop
 from .utils import calc_dynamic_intervals
 
-from ....mmpretrain.data.bmu import get_combo_loader
-
 # for usage of self made sampler
 import numpy as np
 # only EpochBasedTrainLoop works with DynamicSampler
@@ -22,6 +20,7 @@ from mmengine.dataset import DynamicSampler
 import torch.nn.functional as F
 import heapq
 import math
+from mmengine.utils.bmu import get_combo_loader
 
 
 
