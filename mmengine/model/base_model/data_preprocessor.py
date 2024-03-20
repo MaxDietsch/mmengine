@@ -47,6 +47,7 @@ class BaseDataPreprocessor(nn.Module):
         Returns:
             CollatedResult: Inputs and data sample at target device.
         """
+        print(data)
         if isinstance(data, Mapping):
             return {key: self.cast_data(data[key]) for key in data}
         elif isinstance(data, (str, bytes)) or data is None:
