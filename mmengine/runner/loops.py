@@ -228,6 +228,7 @@ class BalancedMixUpTrainLoop(BaseLoop):
             build a dataloader.
         max_epochs (int): Total training epochs.
         samples_per_class (List[int]): array where a[i] defines how many samples of class i are in the training set 
+        alpha (int): hyperparameter for the beta distribution (see paper )
         val_begin (int): The epoch that begins validating.
             Defaults to 1.
         val_interval (int): Validation interval. Defaults to 1.
@@ -243,6 +244,7 @@ class BalancedMixUpTrainLoop(BaseLoop):
             dataloader: Union[DataLoader, Dict],
             max_epochs: int,
             samples_per_class: List[int], 
+            alpha: int, 
             val_begin: int = 1,
             val_interval: int = 1,
             dynamic_intervals: Optional[List[Tuple[int, int]]] = None) -> None:
@@ -275,6 +277,9 @@ class BalancedMixUpTrainLoop(BaseLoop):
 
 
         # BalancedMixUp
+        
+        self.alpha = alpha
+        self.n_classes = len(samples_per_class)
         # define the combo dataloader
         # combo loader has a list where first element is dataloader for instance based sampling
         #                               second element is dataloader for class based sampling
@@ -323,20 +328,23 @@ class BalancedMixUpTrainLoop(BaseLoop):
 
         for idx, data_batch in enumerate(self.combo_loader):
             
-            print(data_batch)
+            #print(data_batch)
             # get inputs from instance sampling 
             inputs = data_batch[0]['inputs']
             labels = torch.tensor([i.gt_label for i in data_batch[0]['data_samples']])
-            print(inputs)
-            print(labels)
+            #print(inputs)
+            #print(labels)
 
             # get inputs from class sampling
-            balanced_inputs, balanced_labels = data_batch[1][0], data_batch[1][1]
+            balanced_inputs = data_batch[1]['inputs']
+            balanced_labels = torch.tensor([i.gt_label for i in data_batch[1]['data_samples']])
 
-            
+            # mix the inputs and labels 
+            lam = np.random.beta(self.alpha, 1)
+            mixed_inputs = (1 - lam) * inputs + lam * balanced_inputs
+            mixed_labels = (1 - lam) * F.one_hot(labels, self.n_classes) + lam * F.one_hot(balanced_labels, self.n_classes)
 
-
-
+            data_batch = {'inputs': mixed_inputs, 'labels': mixed_labels}
             self.run_iter(idx, data_batch)
 
         self.runner.call_hook('after_train_epoch')
