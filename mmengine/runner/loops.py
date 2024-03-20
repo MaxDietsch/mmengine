@@ -500,14 +500,14 @@ class BalancedMixUpTrainLoop(BaseLoop):
 
         for idx, data_batch in enumerate(self.combo_loader):
             
-            
+            print(data_batch)
             # get inputs from instance sampling 
             inputs, labels = data_batch[0][0], data_batch[0][1]
 
             # get inputs from class sampling
             balanced_inputs, balanced_labels = data_batch[1][0], data_batch[1][1]
 
-            print(inputs)
+            
 
 
 
