@@ -2,10 +2,6 @@
 import torch
 from torch.utils.data import DataLoader, WeightedRandomSampler
 
-
-
-
-
 class ComboIter(object):
     """An iterator."""
     def __init__(self, my_loader):
@@ -62,10 +58,16 @@ def get_sampling_probabilities(class_count, mode='instance'):
     sampling_probabilities = relative_freq ** (-1)
 
  # modify dataloader so that it samples based on probabilities
-def modify_loader(loader, mode, ep=None, n_eps=None):
-    class_count = np.unique(loader.dataset.dr, return_counts=True)[1]
+def modify_loader(loader, mode, samples_per_class):
+    class_count = samples_per_class
     sampling_probs = get_sampling_probabilities(class_count, mode=mode)
-    sample_weights = sampling_probs[loader.dataset.dr]
+    
+    dr = []
+    for count, value in class_count:
+        dr.append(torch.full((count,), value))  
+    dr = torch.cat(dr)
+
+    sample_weights = sampling_probs[dr]
 
     mod_sampler = WeightedRandomSampler(weights=sample_weights, num_samples=len(sample_weights))
     mod_loader = DataLoader(loader.dataset, batch_size = loader.batch_size, sampler=mod_sampler, num_workers=loader.num_workers)
@@ -73,9 +75,9 @@ def modify_loader(loader, mode, ep=None, n_eps=None):
 
 
 # get combo loader consisting of instance based sampling and class based sampling 
-def get_combo_loader(loader):
+def get_combo_loader(loader, samples_per_class):
     imbalanced_loader = loader
-    balanced_loader = modify_loader(loader, mode='class')
+    balanced_loader = modify_loader(loader, mode='class', samples_per_class)
 
     combo_loader = ComboLoader([imbalanced_loader, balanced_loader])
     return combo_loader
