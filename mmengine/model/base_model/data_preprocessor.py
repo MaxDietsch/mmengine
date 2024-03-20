@@ -75,7 +75,6 @@ class BaseDataPreprocessor(nn.Module):
         Returns:
             dict or list: Data in the same format as the model input.
         """
-        print(data)
         return self.cast_data(data)  # type: ignore
 
     @property

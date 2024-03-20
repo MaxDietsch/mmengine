@@ -344,7 +344,7 @@ class BalancedMixUpTrainLoop(BaseLoop):
             mixed_inputs = (1 - lam) * inputs + lam * balanced_inputs
             mixed_labels = (1 - lam) * F.one_hot(labels, self.n_classes) + lam * F.one_hot(balanced_labels, self.n_classes)
 
-            data_batch = {'inputs': mixed_inputs, 'labels': mixed_labels}
+            data_batch = {'inputs': mixed_inputs, 'data_samples': mixed_labels}
             self.run_iter(idx, data_batch)
 
         self.runner.call_hook('after_train_epoch')
