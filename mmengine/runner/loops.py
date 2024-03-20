@@ -4,7 +4,7 @@ import time
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, WeightedRandomSampler
 
 from mmengine.evaluator import Evaluator
 from mmengine.logging import print_log
@@ -20,7 +20,7 @@ from mmengine.dataset import DynamicSampler
 import torch.nn.functional as F
 import heapq
 import math
-from mmengine.utils.bmu import get_combo_loader
+from .utils.bmu import get_combo_loader
 
 
 
