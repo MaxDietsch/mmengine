@@ -65,7 +65,7 @@ def modify_loader(loader, samples_per_class, mode):
     
     dr = []
     for count, value in enumerate(class_count):
-        dr.append(torch.full((count,), value))  
+        dr.append(torch.full((value,), count))  
     dr = torch.cat(dr)
 
     sample_weights = sampling_probs[dr]
