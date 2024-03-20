@@ -437,6 +437,7 @@ class BalancedMixUpTrainLoop(BaseLoop):
         # combo loader has a list where first element is dataloader for instance based sampling
         #                               second element is dataloader for class based sampling
         self.combo_loader = get_combo_loader(self.dataloader, torch.tensor(samples_per_class))
+        """
         train_dataloader = dict(
             batch_size=1,
             num_workers=5,
@@ -454,6 +455,7 @@ class BalancedMixUpTrainLoop(BaseLoop):
 
         sec = build_dataloader(train_dataloader)
         print(sec)
+        """
 
     @property
     def max_epochs(self):
