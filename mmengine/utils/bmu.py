@@ -83,28 +83,3 @@ def get_combo_loader(loader, samples_per_class):
     combo_loader = ComboLoader([imbalanced_loader, balanced_loader])
     return combo_loader
 
-
-def get_train_datasets(data_root, ann_file, data_prefix, with_label, classes, pipeline, see_classes):
-
-    train_dataset = CustomDataset(data_root=data_root,
-                                  ann_file=ann_file,
-                                  data_prefix=data_prefix,
-                                  with_label=with_label,
-                                  classes=classes,
-                                  pipeline=pipeline
-                                  )
-    if see_classes:
-        print(20 * '*')
-        for c in range(len(np.unique(train_dataset.dr))):
-            exs_train = np.count_nonzero(train_dataset.dr== c)
-            print('Found {:d} train examples of class {}'.format(exs_train, c))
-
-    return train_dataset
-
-
-def get_train_loader(batch_size, num_workers, data_root, ann_file, data_prefix, with_label, classes, pipeline, see_classes=True):
-
-    train_dataset = get_train_dataset(data_root, ann_file, data_prefix, with_label, classes, pipeline, see_classes)
-
-    train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, num_workers=num_workers, pin_memory=torch.cuda.is_available(), shuffle=True, drop_last=True)
-    return train_loader
