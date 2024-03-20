@@ -73,9 +73,8 @@ def modify_loader(loader, samples_per_class, mode):
     sample_weights = sampling_probs[dr]
 
     mod_sampler = WeightedRandomSampler(weights=sample_weights, num_samples=len(sample_weights))
-    print(loader.dataset)
+    print(loader.collate_fn)
     mod_loader = DataLoader(loader.dataset, batch_size = loader.batch_size, sampler=mod_sampler, num_workers=loader.num_workers)
-    print(mod_loader.dataset)
     return mod_loader
 
 
