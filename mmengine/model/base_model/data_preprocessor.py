@@ -48,15 +48,19 @@ class BaseDataPreprocessor(nn.Module):
             CollatedResult: Inputs and data sample at target device.
         """
         if isinstance(data, Mapping):
+            print("mapping")
             return {key: self.cast_data(data[key]) for key in data}
         elif isinstance(data, (str, bytes)) or data is None:
             return data
         elif isinstance(data, tuple) and hasattr(data, '_fields'):
+            print("tuple")
             # namedtuple
             return type(data)(*(self.cast_data(sample) for sample in data))  # type: ignore  # noqa: E501  # yapf:disable
         elif isinstance(data, Sequence):
+            print("sequence")
             return type(data)(self.cast_data(sample) for sample in data)  # type: ignore  # noqa: E501  # yapf:disable
         elif isinstance(data, (torch.Tensor, BaseDataElement)):
+            print("basedataelement")
             return data.to(self.device, non_blocking=self._non_blocking)
         else:
             return data
