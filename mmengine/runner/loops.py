@@ -20,7 +20,7 @@ from mmengine.dataset import DynamicSampler
 import torch.nn.functional as F
 import heapq
 import math
-from .utils.bmu import get_combo_loader
+from mmengine.utils.bmu import get_combo_loader
 
 
 
