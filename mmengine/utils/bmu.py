@@ -6,7 +6,6 @@ class ComboIter(object):
     """An iterator."""
     def __init__(self, my_loader):
         self.my_loader = my_loader
-        print(my_loader.loaders)
         self.loader_iters = [iter(loader) for loader in self.my_loader.loaders]
 
     def __iter__(self):
@@ -17,6 +16,8 @@ class ComboIter(object):
         # terminates, this iterator will terminates.
         # The `StopIteration` raised inside that shortest loader's `__next__`
         # method will in turn gets out of this `__next__` method.
+        print(self.loader_iters[0])
+        print(self.loader_iters[0].next())
         batches = [loader_iter.next() for loader_iter in self.loader_iters]
         return self.my_loader.combine_batch(batches)
 
