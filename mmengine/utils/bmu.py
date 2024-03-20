@@ -56,6 +56,7 @@ def get_sampling_probabilities(class_count, mode='instance'):
 
     relative_freq = class_count ** q / (class_count ** q).sum()
     sampling_probabilities = relative_freq ** (-1)
+    return sampling_probabilities
 
  # modify dataloader so that it samples based on probabilities
 def modify_loader(loader, samples_per_class, mode):
