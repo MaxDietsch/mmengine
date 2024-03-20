@@ -16,8 +16,6 @@ class ComboIter(object):
         # terminates, this iterator will terminates.
         # The `StopIteration` raised inside that shortest loader's `__next__`
         # method will in turn gets out of this `__next__` method.
-        next(self.loader_iters[0])
-        next(self.loader_iters[1])
         batches = [next(loader_iter) for loader_iter in self.loader_iters]
         return self.my_loader.combine_batch(batches)
 
@@ -73,7 +71,6 @@ def modify_loader(loader, samples_per_class, mode):
     sample_weights = sampling_probs[dr]
 
     mod_sampler = WeightedRandomSampler(weights=sample_weights, num_samples=len(sample_weights))
-    print(loader.collate_fn)
     mod_loader = DataLoader(loader.dataset, batch_size = loader.batch_size, sampler=mod_sampler, collate_fn = loader.collate_fn, num_workers=loader.num_workers)
     return mod_loader
 
