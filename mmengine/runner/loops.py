@@ -343,6 +343,7 @@ class BalancedMixUpTrainLoop(BaseLoop):
             lam = np.random.beta(self.alpha, 1) # lambda is the same for whole batch, maybe change it
             mixed_inputs = (1 - lam) * inputs + lam * balanced_inputs
             mixed_labels = (1 - lam) * F.one_hot(labels, self.n_classes) + lam * F.one_hot(balanced_labels, self.n_classes)
+            mixed_labels = mixed_labels.to('cuda')
 
             data_batch = {'inputs': mixed_inputs, 'data_samples': mixed_labels}
             self.run_iter(idx, data_batch)
