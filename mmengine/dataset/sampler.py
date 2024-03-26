@@ -489,7 +489,7 @@ class RUSSampler(Sampler):
         self.factors = torch.round(self.label_counts.min() * self.rus_pct * self.ros_min_pct / self.label_counts, decimals = 2)
 
         # correctly set the number of samples of the majority class
-        self.factors[torch.argmin(self.label_counts)] = 1 * self.ros_maj_pct
+        self.factors[torch.argmin(self.label_counts)] = 1 * self.ros_min_pct
         # print(f'factors: {self.factors}')
 
         """
