@@ -520,6 +520,8 @@ class RUSSampler(Sampler):
 
         # get indices of elements which should be included in training
         indices = []
+        counts = torch.zeros(self.num_classes, dtype=torch.int32)
+
         
         for idx, label in enumerate(self.labels):
             # Probability part of the factor
