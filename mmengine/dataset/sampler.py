@@ -181,13 +181,13 @@ class DynamicSampler(Sampler):
 
         # initialize sample_size like in the paper
         self.num_classes = len(self.dataset.metainfo['classes'])
-        #self.average_sample_size = len(self.labels) // self.num_classes
+        self.average_sample_size = len(self.labels) // self.num_classes
         
         # exclude majority class: 
-        element_counts = self.labels.bincount()
-        most_common_element = element_counts.argmax()
-        count = element_counts[most_common_element].item()
-        self.average_sample_size = (len(self.labels) - count) // (self.num_classes - 1)
+        #element_counts = self.labels.bincount()
+        #most_common_element = element_counts.argmax()
+        #count = element_counts[most_common_element].item()
+        #self.average_sample_size = (len(self.labels) - count) // (self.num_classes - 1)
 
         self.sample_size = torch.full((self.num_classes, ), self.average_sample_size, dtype = torch.int)
         # numpy: self.sample_size = np.full(self.num_classes, self.average_sample_size)
