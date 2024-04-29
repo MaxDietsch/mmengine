@@ -307,7 +307,7 @@ class CoSenTrainLoop(BaseLoop):
         self.size_dataset = samples_per_class.sum()
         h1 = samples_per_class.view(-1, 1) / self.size_dataset
         h2 = samples_per_class.view(1, -1) / self.size_dataset
-        self.h = torch.max(h1, h2)
+        self.h = torch.max(h1, h2).to(torch.device('cuda'))
         
         # for calculating confusion matrix store y_pred and y_true
         self.y_pred = torch.randint(self.num_classes, (self.size_dataset, ))
