@@ -215,6 +215,299 @@ class _InfiniteDataloaderIterator:
 
 
 @LOOPS.register_module()
+class CoSenTrainLoop(BaseLoop):
+    """Loop for epoch-based training based on:
+        Cost-Sensitive Learning of Deep Feature Representations from Imbalanced Data by S.H. Khan, M. Hayat ...
+        Requirements:
+            model must be of type CoSenClassifier
+            new (non-default) parameters in the init.
+
+    Args:
+        runner (Runner): A reference of runner.
+        dataloader (Dataloader or dict): A dataloader object or a dict to
+            build a dataloader.
+        max_epochs (int): Total training epochs.
+        s_freq (int): set the frequency how often S should be evaluated: f.e. 3 means S
+            is calculated every 3 epochs
+        s_samples_per_class (List[int]): set the number of samples per class which are 
+            included in the process of calculating S
+        samples_per_class (List[int]): set how many samples are present in the dataset per class
+        mu1, mu2, s1, s2 (float): Hyperparameters of the CoSen algorithm 
+        val_begin (int): The epoch that begins validating.
+            Defaults to 1.
+        val_interval (int): Validation interval. Defaults to 1.
+        dynamic_intervals (List[Tuple[int, int]], optional): The
+            first element in the tuple is a milestone and the second
+            element is a interval. The interval is used after the
+            corresponding milestone. Defaults to None.
+    """
+
+    def __init__(
+            self,
+            runner,
+            dataloader: Union[DataLoader, Dict],
+            max_epochs: int,
+            s_freq: int, 
+            s_samples_per_class: List[int],
+            samples_per_class: List[int],
+            mu1: float,
+            mu2: float,
+            s1: float,
+            s2: float, 
+            val_begin: int = 1,
+            val_interval: int = 1,
+            dynamic_intervals: Optional[List[Tuple[int, int]]] = None) -> None:
+        super().__init__(runner, dataloader)
+        self._max_epochs = int(max_epochs)
+        assert self._max_epochs == max_epochs, \
+            f'`max_epochs` should be a integer number, but get {max_epochs}.'
+        self._max_iters = self._max_epochs * len(self.dataloader)
+        self._epoch = 0
+        self._iter = 0
+        self.val_begin = val_begin
+        self.val_interval = val_interval
+        # This attribute will be updated by `EarlyStoppingHook`
+        # when it is enabled.
+        self.stop_training = False
+        if hasattr(self.dataloader.dataset, 'metainfo'):
+            self.runner.visualizer.dataset_meta = \
+                self.dataloader.dataset.metainfo
+        else:
+            print_log(
+                f'Dataset {self.dataloader.dataset.__class__.__name__} has no '
+                'metainfo. ``dataset_meta`` in visualizer will be '
+                'None.',
+                logger='current',
+                level=logging.WARNING)
+
+        self.dynamic_milestones, self.dynamic_intervals = \
+            calc_dynamic_intervals(
+                self.val_interval, dynamic_intervals)
+
+
+        # for CoSen
+        from mmpretrain.models.classifiers import CoSenClassifier # this is not good style
+        assert isinstance(self.runner.model, CoSenClassifier), 'The model should be of type CoSenClassifier when using CoSenTrainLoop'
+
+        self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
+        self.s_freq = s_freq
+        self.s_samples_per_class = s_samples_per_class
+
+        # store distances
+        self.d = torch.zeros((sum(self.s_samples_per_class), self.num_classes))
+
+        # stores deep features
+        self.v = [[] for _ in range(self.num_classes)]
+
+        # store c2c separabililty
+        self.c2c_sep = torch.zeros((self.num_classes, self.num_classes))
+
+        # define H
+        samples_per_class = torch.tensor(samples_per_class)
+        self.size_dataset = samples_per_class.sum()
+        h1 = samples_per_class.view(-1, 1) / self.size_dataset
+        h2 = samples_per_class.view(1, -1) / self.size_dataset
+        self.h = torch.max(h1, h2)
+        
+        # for calculating confusion matrix store y_pred and y_true
+        self.y_pred = torch.randint(self.num_classes, (self.size_dataset, ))
+        self.y_true = torch.randint(self.num_classes, (self.size_dataset, ))
+        
+        # Hyperparameter
+        self.mu1 = mu1 
+        self.mu2 = mu2 
+        self.s1 = s1
+        self.s2 = s2
+        
+        # store best accurcy, used for updating learning rate of cosen matrix 
+        self.best_acc = 0
+        self.updated = False
+
+    @property
+    def max_epochs(self):
+        """int: Total epochs to train model."""
+        return self._max_epochs
+
+    @property
+    def max_iters(self):
+        """int: Total iterations to train model."""
+        return self._max_iters
+
+    @property
+    def epoch(self):
+        """int: Current epoch."""
+        return self._epoch
+
+    @property
+    def iter(self):
+        """int: Current iteration."""
+        return self._iter
+
+
+    def calc_c2c_separability(self):
+
+        for i in range(self.num_classes):
+            low_idx = sum(self.s_samples_per_class[ : i ])
+            high_idx = sum(self.s_samples_per_class[  : i+1 ])
+            for j in range(self.num_classes):
+
+                # get sorted distances
+                # row l contains distance of v[i][l] to each of v[j]
+                sorted_distances = (torch.sort(torch.cdist(self.v[i], self.v[j]))[0]).to(torch.device('cpu'))
+                # decide which element to take, the smallest (inter class) or the 2nd smallest (intra class)
+                print(sorted_distances)
+                entry_idx = 0 if i != j else 1
+                self.d[low_idx : high_idx, j] += sorted_distances[ : , entry_idx]
+        
+        #print(self.d)
+
+        # based on the distances, fill S(p, q)
+        for i in range(self.num_classes):
+            low_idx = sum(self.s_samples_per_class[ : i ])
+            high_idx = sum(self.s_samples_per_class[ : i+1 ])
+            
+            for j in range(self.num_classes):
+
+                ratio = torch.sum(self.d[low_idx : high_idx, i] / self.d[low_idx : high_idx , j])
+                self.c2c_sep[i, j] = 1/self.s_samples_per_class[i] * ratio
+
+        self.d.fill_(0)
+
+
+    # could be done by import of torchmetrics
+    def confusion_matrix(self, y_pred, y_true):
+        conf_matrix = torch.zeros(self.num_classes, self.num_classes, dtype=torch.int64)
+        for t, p in zip(y_true.view(-1), y_pred.view(-1)):
+            conf_matrix[t, p] += 1
+        
+        # to get probabilities
+        return conf_matrix / conf_matrix.sum(1, keepdim = True)
+
+
+    def run(self) -> torch.nn.Module:
+        """Launch training."""
+        self.runner.call_hook('before_train')
+
+        while self._epoch < self._max_epochs and not self.stop_training:
+            
+            # update S only in specific epochs like in the paper
+            with torch.no_grad():
+                if self._epoch % self.s_freq == 0 and self._epoch != 0:
+                    # reset updated lr 
+                    self.updated = False
+
+                    # get the deep features for each class
+                    for idx, data_batch in enumerate(self.dataloader):
+                        batch = self.runner.model.data_preprocessor(data_batch, True) 
+                        inputs = batch['inputs']
+                        data_samples = batch['data_samples']
+                        labels = torch.cat([i.gt_label for i in data_samples])
+                        outs = self.runner.model.extract_feat(inputs)
+                        [self.v[label].append(outs[0][ix]) for ix, label in enumerate(labels) if len(self.v[label]) < self.s_samples_per_class[label]]
+                        
+                        if all( x >= y for x, y in zip([len(self.v[i]) for i in range(self.num_classes)], self.s_samples_per_class)):
+                            for i in range(self.num_classes):
+                                self.v[i] = torch.stack(self.v[i], dim = 0)
+                            break
+
+                    # calculate S 
+                    self.calc_c2c_separability()
+                    self.v = [[] for _ in range(self.num_classes)]
+                    # print(self.c2c_sep)
+                    
+                    # calculate confusion matrix R (could be done with library torchmetrics)
+                    r = self.confusion_matrix(self.y_pred, self.y_true)
+                    # print(r)
+                    
+                    # calculate matrix T
+                    t_temp = torch.mul(torch.exp( - (self.c2c_sep - self.mu1) ** 2 / (2 * self.s1 ** 2)), torch.exp( - (r - self.mu2) ** 2 / (2 * self.s2 ** 2)))
+                    t = torch.mul(self.h, t_temp)
+                    #print(t)
+                    
+                    # calculate gradient for cosen matrix
+                    #grad = self.runner.model.head.loss_module.compute_grad(t.view(-1, 1))
+                    #print(grad)
+
+                    # calculate gradient and update cost matrix 
+                    # print(self.runner.model.head.loss_module.xi)
+                    self.runner.model.head.loss_module.update_xi(t.view(-1, 1))
+                    print(self.runner.model.head.loss_module.xi)
+
+
+            self.run_epoch()
+
+            self._decide_current_val_interval()
+            if (self.runner.val_loop is not None
+                    and self._epoch >= self.val_begin
+                    and self._epoch % self.val_interval == 0):
+                metric = self.runner.val_loop.run()
+            
+            # if new accuracy is better than before update learning rate of cosen matrix
+            if metric['accuracy/top1'] > self.best_acc and not self.updated:
+                print('Update learning rate of CoSen matrix')
+                new_lr = self.runner.model.head.loss_module.get_xi_lr() * 0.01
+                self.runner.model.head.loss_module.update_xi(new_lr)
+                self.updated = True
+
+
+        self.runner.call_hook('after_train')
+        return self.runner.model
+
+    def run_epoch(self) -> None:
+        """Iterate one epoch."""
+        self.runner.call_hook('before_train_epoch')
+        self.runner.model.train()
+
+        for idx, data_batch in enumerate(self.dataloader):
+            self.run_iter(idx, data_batch)
+
+        self.runner.call_hook('after_train_epoch')
+        self._epoch += 1
+
+    def run_iter(self, idx, data_batch: Sequence[dict]) -> None:
+        """Iterate one min-batch.
+
+        Args:
+            data_batch (Sequence[dict]): Batch of data from dataloader.
+        """
+        self.runner.call_hook(
+            'before_train_iter', batch_idx=idx, data_batch=data_batch)
+        # Enable gradient accumulation mode and avoid unnecessary gradient
+        # synchronization during gradient accumulation process.
+        # outputs should be a dict of loss.
+
+        # now returns the loss and the cls_score of the model as a tuple
+        outputs = self.runner.model.train_step(
+            data_batch, optim_wrapper=self.runner.optim_wrapper)
+
+        # get true and predicted labels 
+        true_labels = torch.cat([i.gt_label for i in data_batch['data_samples']])
+        
+        pred_scores = F.softmax(outputs[1], dim=1)
+        pred_labels = pred_scores.argmax(dim=1, keepdim=True).detach().squeeze()
+
+        # fill the y_pred and y_true
+        batch_size = self.dataloader.batch_size
+        low_idx = idx * batch_size
+        high_idx = min((idx + 1) * batch_size, self.size_dataset)
+        self.y_pred[low_idx : high_idx] = pred_labels
+        self.y_true[low_idx: high_idx] = true_labels
+
+        self.runner.call_hook(
+            'after_train_iter',
+            batch_idx=idx,
+            data_batch=data_batch,
+            outputs=outputs[0])
+        self._iter += 1
+
+    def _decide_current_val_interval(self) -> None:
+        """Dynamically modify the ``val_interval``."""
+        step = bisect.bisect(self.dynamic_milestones, (self.epoch + 1))
+        self.val_interval = self.dynamic_intervals[step - 1]
+
+
+
+@LOOPS.register_module()
 class BalancedMixUpTrainLoop(BaseLoop):
     """Loop for Balanced-MixUP training. Like in the paper: 
         Balanced-MixUp for Highly Imbalanced Medical Image Classification
@@ -773,296 +1066,6 @@ class DOSTrainLoop(BaseLoop):
         step = bisect.bisect(self.dynamic_milestones, (self.epoch + 1))
         self.val_interval = self.dynamic_intervals[step - 1]
 
-
-@LOOPS.register_module()
-class CoSenTrainLoop(BaseLoop):
-    """Loop for epoch-based training based on:
-        Cost-Sensitive Learning of Deep Feature Representations from Imbalanced Data by S.H. Khan, M. Hayat ...
-        Requirements:
-            model must be of type CoSenClassifier
-            new (non-default) parameters in the init.
-
-    Args:
-        runner (Runner): A reference of runner.
-        dataloader (Dataloader or dict): A dataloader object or a dict to
-            build a dataloader.
-        max_epochs (int): Total training epochs.
-        s_freq (int): set the frequency how often S should be evaluated: f.e. 3 means S
-            is calculated every 3 epochs
-        s_samples_per_class (List[int]): set the number of samples per class which are 
-            included in the process of calculating S
-        samples_per_class (List[int]): set how many samples are present in the dataset per class
-        mu1, mu2, s1, s2 (float): Hyperparameters of the CoSen algorithm 
-        val_begin (int): The epoch that begins validating.
-            Defaults to 1.
-        val_interval (int): Validation interval. Defaults to 1.
-        dynamic_intervals (List[Tuple[int, int]], optional): The
-            first element in the tuple is a milestone and the second
-            element is a interval. The interval is used after the
-            corresponding milestone. Defaults to None.
-    """
-
-    def __init__(
-            self,
-            runner,
-            dataloader: Union[DataLoader, Dict],
-            max_epochs: int,
-            s_freq: int, 
-            s_samples_per_class: List[int],
-            samples_per_class: List[int],
-            mu1: float,
-            mu2: float,
-            s1: float,
-            s2: float, 
-            val_begin: int = 1,
-            val_interval: int = 1,
-            dynamic_intervals: Optional[List[Tuple[int, int]]] = None) -> None:
-        super().__init__(runner, dataloader)
-        self._max_epochs = int(max_epochs)
-        assert self._max_epochs == max_epochs, \
-            f'`max_epochs` should be a integer number, but get {max_epochs}.'
-        self._max_iters = self._max_epochs * len(self.dataloader)
-        self._epoch = 0
-        self._iter = 0
-        self.val_begin = val_begin
-        self.val_interval = val_interval
-        # This attribute will be updated by `EarlyStoppingHook`
-        # when it is enabled.
-        self.stop_training = False
-        if hasattr(self.dataloader.dataset, 'metainfo'):
-            self.runner.visualizer.dataset_meta = \
-                self.dataloader.dataset.metainfo
-        else:
-            print_log(
-                f'Dataset {self.dataloader.dataset.__class__.__name__} has no '
-                'metainfo. ``dataset_meta`` in visualizer will be '
-                'None.',
-                logger='current',
-                level=logging.WARNING)
-
-        self.dynamic_milestones, self.dynamic_intervals = \
-            calc_dynamic_intervals(
-                self.val_interval, dynamic_intervals)
-
-
-        # for CoSen
-        from mmpretrain.models.classifiers import CoSenClassifier # this is not good style
-        assert isinstance(self.runner.model, CoSenClassifier), 'The model should be of type CoSenClassifier when using CoSenTrainLoop'
-
-        self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
-        self.s_freq = s_freq
-        self.s_samples_per_class = s_samples_per_class
-
-        # store distances
-        self.d = torch.zeros((sum(self.s_samples_per_class), self.num_classes))
-
-        # stores deep features
-        self.v = [[] for _ in range(self.num_classes)]
-
-        # store c2c separabililty
-        self.c2c_sep = torch.zeros((self.num_classes, self.num_classes))
-
-        # define H
-        samples_per_class = torch.tensor(samples_per_class)
-        self.size_dataset = samples_per_class.sum()
-        h1 = samples_per_class.view(-1, 1) / self.size_dataset
-        h2 = samples_per_class.view(1, -1) / self.size_dataset
-        self.h = torch.max(h1, h2)
-        
-        # for calculating confusion matrix store y_pred and y_true
-        self.y_pred = torch.randint(self.num_classes, (self.size_dataset, ))
-        self.y_true = torch.randint(self.num_classes, (self.size_dataset, ))
-        
-        # Hyperparameter
-        self.mu1 = mu1 
-        self.mu2 = mu2 
-        self.s1 = s1
-        self.s2 = s2
-        
-        # store best accurcy, used for updating learning rate of cosen matrix 
-        self.best_acc = 0
-        self.updated = False
-
-    @property
-    def max_epochs(self):
-        """int: Total epochs to train model."""
-        return self._max_epochs
-
-    @property
-    def max_iters(self):
-        """int: Total iterations to train model."""
-        return self._max_iters
-
-    @property
-    def epoch(self):
-        """int: Current epoch."""
-        return self._epoch
-
-    @property
-    def iter(self):
-        """int: Current iteration."""
-        return self._iter
-
-
-    def calc_c2c_separability(self):
-
-        for i in range(self.num_classes):
-            low_idx = sum(self.s_samples_per_class[ : i ])
-            high_idx = sum(self.s_samples_per_class[  : i+1 ])
-            for j in range(self.num_classes):
-
-                # get sorted distances
-                # row l contains distance of v[i][l] to each of v[j]
-                sorted_distances = (torch.sort(torch.cdist(self.v[i], self.v[j]))[0]).to(torch.device('cpu'))
-                # decide which element to take, the smallest (inter class) or the 2nd smallest (intra class)
-                entry_idx = 0 if i != j else 1
-                self.d[low_idx : high_idx, j] += sorted_distances[ : , entry_idx]
-        
-        #print(self.d)
-
-        # based on the distances, fill S(p, q)
-        for i in range(self.num_classes):
-            low_idx = sum(self.s_samples_per_class[ : i ])
-            high_idx = sum(self.s_samples_per_class[ : i+1 ])
-            
-            for j in range(self.num_classes):
-
-                ratio = torch.sum(self.d[low_idx : high_idx, i] / self.d[low_idx : high_idx , j])
-                self.c2c_sep[i, j] = 1/self.s_samples_per_class[i] * ratio
-
-        self.d.fill_(0)
-
-
-    # could be done by import of torchmetrics
-    def confusion_matrix(self, y_pred, y_true):
-        conf_matrix = torch.zeros(self.num_classes, self.num_classes, dtype=torch.int64)
-        for t, p in zip(y_true.view(-1), y_pred.view(-1)):
-            conf_matrix[t, p] += 1
-        
-        # to get probabilities
-        return conf_matrix / conf_matrix.sum(1, keepdim = True)
-
-
-    def run(self) -> torch.nn.Module:
-        """Launch training."""
-        self.runner.call_hook('before_train')
-
-        while self._epoch < self._max_epochs and not self.stop_training:
-            
-            # update S only in specific epochs like in the paper
-            with torch.no_grad():
-                if self._epoch % self.s_freq == 0 and self._epoch != 0:
-                    # reset updated lr 
-                    self.updated = False
-
-                    # get the deep features for each class
-                    for idx, data_batch in enumerate(self.dataloader):
-                        batch = self.runner.model.data_preprocessor(data_batch, True) 
-                        inputs = batch['inputs']
-                        data_samples = batch['data_samples']
-                        labels = torch.cat([i.gt_label for i in data_samples])
-                        outs = self.runner.model.extract_feat(inputs)
-                        [self.v[label].append(outs[0][ix]) for ix, label in enumerate(labels) if len(self.v[label]) < self.s_samples_per_class[label]]
-                        
-                        if all( x >= y for x, y in zip([len(self.v[i]) for i in range(self.num_classes)], self.s_samples_per_class)):
-                            for i in range(self.num_classes):
-                                self.v[i] = torch.stack(self.v[i], dim = 0)
-                            break
-
-                    # calculate S 
-                    self.calc_c2c_separability()
-                    self.v = [[] for _ in range(self.num_classes)]
-                    # print(self.c2c_sep)
-                    
-                    # calculate confusion matrix R (could be done with library torchmetrics)
-                    r = self.confusion_matrix(self.y_pred, self.y_true)
-                    # print(r)
-                    
-                    # calculate matrix T
-                    t_temp = torch.mul(torch.exp( - (self.c2c_sep - self.mu1) ** 2 / (2 * self.s1 ** 2)), torch.exp( - (r - self.mu2) ** 2 / (2 * self.s2 ** 2)))
-                    t = torch.mul(self.h, t_temp)
-                    #print(t)
-                    
-                    # calculate gradient for cosen matrix
-                    #grad = self.runner.model.head.loss_module.compute_grad(t.view(-1, 1))
-                    #print(grad)
-
-                    # calculate gradient and update cost matrix 
-                    # print(self.runner.model.head.loss_module.xi)
-                    self.runner.model.head.loss_module.update_xi(t.view(-1, 1))
-                    print(self.runner.model.head.loss_module.xi)
-
-
-            self.run_epoch()
-
-            self._decide_current_val_interval()
-            if (self.runner.val_loop is not None
-                    and self._epoch >= self.val_begin
-                    and self._epoch % self.val_interval == 0):
-                metric = self.runner.val_loop.run()
-            
-            # if new accuracy is better than before update learning rate of cosen matrix
-            if metric['accuracy/top1'] > self.best_acc and not self.updated:
-                print('Update learning rate of CoSen matrix')
-                new_lr = self.runner.model.head.loss_module.get_xi_lr() * 0.01
-                self.runner.model.head.loss_module.update_xi(new_lr)
-                self.updated = True
-
-
-        self.runner.call_hook('after_train')
-        return self.runner.model
-
-    def run_epoch(self) -> None:
-        """Iterate one epoch."""
-        self.runner.call_hook('before_train_epoch')
-        self.runner.model.train()
-
-        for idx, data_batch in enumerate(self.dataloader):
-            self.run_iter(idx, data_batch)
-
-        self.runner.call_hook('after_train_epoch')
-        self._epoch += 1
-
-    def run_iter(self, idx, data_batch: Sequence[dict]) -> None:
-        """Iterate one min-batch.
-
-        Args:
-            data_batch (Sequence[dict]): Batch of data from dataloader.
-        """
-        self.runner.call_hook(
-            'before_train_iter', batch_idx=idx, data_batch=data_batch)
-        # Enable gradient accumulation mode and avoid unnecessary gradient
-        # synchronization during gradient accumulation process.
-        # outputs should be a dict of loss.
-
-        # now returns the loss and the cls_score of the model as a tuple
-        outputs = self.runner.model.train_step(
-            data_batch, optim_wrapper=self.runner.optim_wrapper)
-
-        # get true and predicted labels 
-        true_labels = torch.cat([i.gt_label for i in data_batch['data_samples']])
-        
-        pred_scores = F.softmax(outputs[1], dim=1)
-        pred_labels = pred_scores.argmax(dim=1, keepdim=True).detach().squeeze()
-
-        # fill the y_pred and y_true
-        batch_size = self.dataloader.batch_size
-        low_idx = idx * batch_size
-        high_idx = min((idx + 1) * batch_size, self.size_dataset)
-        self.y_pred[low_idx : high_idx] = pred_labels
-        self.y_true[low_idx: high_idx] = true_labels
-
-        self.runner.call_hook(
-            'after_train_iter',
-            batch_idx=idx,
-            data_batch=data_batch,
-            outputs=outputs[0])
-        self._iter += 1
-
-    def _decide_current_val_interval(self) -> None:
-        """Dynamically modify the ``val_interval``."""
-        step = bisect.bisect(self.dynamic_milestones, (self.epoch + 1))
-        self.val_interval = self.dynamic_intervals[step - 1]
 
 
 @LOOPS.register_module()
