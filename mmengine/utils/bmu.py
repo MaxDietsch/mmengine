@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import DataLoader, WeightedRandomSampler
 
 class ComboIter(object):
-    """An iterator."""
+    """An iterator. for ComboLoader"""
     def __init__(self, my_loader):
         self.my_loader = my_loader
         self.loader_iters = [iter(loader) for loader in self.my_loader.loaders]
@@ -23,9 +23,8 @@ class ComboIter(object):
         return len(self.my_loader)
 
 class ComboLoader(object):
-    """This class wraps several pytorch DataLoader objects, allowing each time
-    taking a batch from each of them and then combining these several batches
-    into one.
+    """Loader that combines 2 Dataloaders.
+    the sampled batch will be a list of batch from each dataloader
     Args:
     loaders: a list or tuple of pytorch DataLoader objects
     """
@@ -44,9 +43,9 @@ class ComboLoader(object):
 
 # get sampling probabilities for each class
 def get_sampling_probabilities(class_count, mode='instance'):
-    if mode == 'instance':
+    if mode == 'class':
         q = 0
-    elif mode == 'class':
+    elif mode == 'instance':
         q = 1
     elif mode == 'sqrt':
         q = 0.5 # 1/2
@@ -55,13 +54,14 @@ def get_sampling_probabilities(class_count, mode='instance'):
     else: sys.exit('not a valid mode')
 
     relative_freq = class_count ** q / (class_count ** q).sum()
-    sampling_probabilities = relative_freq ** (-1)
+    sampling_probabilities = relative_freq #** (-1)
     return sampling_probabilities
 
  # modify dataloader so that it samples based on probabilities
 def modify_loader(loader, samples_per_class, mode):
     class_count = samples_per_class
     sampling_probs = get_sampling_probabilities(class_count, mode=mode)
+    print(sampling_probs)
     
     dr = []
     for count, value in enumerate(class_count):

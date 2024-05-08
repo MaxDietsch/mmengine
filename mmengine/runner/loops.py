@@ -230,7 +230,7 @@ class CoSenTrainLoop(BaseLoop):
         s_freq (int): set the frequency how often S should be evaluated: f.e. 3 means S
             is calculated every 3 epochs
         s_samples_per_class (List[int]): set the number of samples per class which are 
-            included in the process of calculating S
+            included in the process of calculating S (should be only a small set to be computationally efficient)
         samples_per_class (List[int]): set how many samples are present in the dataset per class
         mu1, mu2, s1, s2 (float): Hyperparameters of the CoSen algorithm 
         val_begin (int): The epoch that begins validating.
@@ -299,7 +299,7 @@ class CoSenTrainLoop(BaseLoop):
         # stores deep features
         self.v = [[] for _ in range(self.num_classes)]
 
-        # store c2c separabililty
+        # store c2c separability
         self.c2c_sep = torch.zeros((self.num_classes, self.num_classes))
 
         # define H
@@ -424,10 +424,6 @@ class CoSenTrainLoop(BaseLoop):
                     t = torch.mul(self.h, t_temp)
                     #print(t)
                     
-                    # calculate gradient for cosen matrix
-                    #grad = self.runner.model.head.loss_module.compute_grad(t.view(-1, 1))
-                    #print(grad)
-
                     # calculate gradient and update cost matrix 
                     # print(self.runner.model.head.loss_module.xi)
                     self.runner.model.head.loss_module.update_xi(t.view(-1, 1))
@@ -506,7 +502,7 @@ class CoSenTrainLoop(BaseLoop):
         self.val_interval = self.dynamic_intervals[step - 1]
 
 
-
+# not tested
 @LOOPS.register_module()
 class BalancedMixUpTrainLoop(BaseLoop):
     """Loop for Balanced-MixUP training. Like in the paper: 
@@ -672,7 +668,7 @@ class BalancedMixUpTrainLoop(BaseLoop):
 
 
 
-
+# not tested
 @LOOPS.register_module()
 class DOSTrainLoop(BaseLoop):
     """Loop for epoch-based training based on: 
@@ -1067,7 +1063,7 @@ class DOSTrainLoop(BaseLoop):
         self.val_interval = self.dynamic_intervals[step - 1]
 
 
-
+# not tested 
 @LOOPS.register_module()
 class HardSamplingBasedTrainLoop(BaseLoop):
     """Loop based on epoch-based training based on: 
