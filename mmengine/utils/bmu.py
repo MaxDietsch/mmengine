@@ -43,9 +43,9 @@ class ComboLoader(object):
 
 # get sampling probabilities for each class
 def get_sampling_probabilities(class_count, mode='instance'):
-    if mode == 'class':
+    if mode == 'instance':
         q = 0
-    elif mode == 'instance':
+    elif mode == 'class':
         q = 1
     elif mode == 'sqrt':
         q = 0.5 # 1/2
@@ -54,14 +54,13 @@ def get_sampling_probabilities(class_count, mode='instance'):
     else: sys.exit('not a valid mode')
 
     relative_freq = class_count ** q / (class_count ** q).sum()
-    sampling_probabilities = relative_freq #** (-1)
+    sampling_probabilities = relative_freq ** (-1)
     return sampling_probabilities
 
  # modify dataloader so that it samples based on probabilities
 def modify_loader(loader, samples_per_class, mode):
     class_count = samples_per_class
     sampling_probs = get_sampling_probabilities(class_count, mode=mode)
-    print(sampling_probs)
     
     dr = []
     for count, value in enumerate(class_count):
