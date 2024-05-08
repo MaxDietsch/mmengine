@@ -566,7 +566,10 @@ class BalancedMixUpTrainLoop(BaseLoop):
 
 
         # BalancedMixUp
-        
+
+        from mmpretrain.models.heads import BMUHead # this is not good style
+        assert isinstance(self.runner.model.head, BMUHead), 'The model head should be of type BMUHead when using BMUTrainLoop'
+
         self.alpha = alpha
         self.n_classes = len(samples_per_class)
         # define the combo dataloader
