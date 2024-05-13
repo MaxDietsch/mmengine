@@ -374,7 +374,7 @@ class CoSenTrainLoop(BaseLoop):
             
             for j in range(self.num_classes):
 
-                ratio = torch.sum(self.d[low_idx : high_idx, i] / self.d[low_idx : high_idx , j])
+                ratio = torch.sum(self.d[low_idx : high_idx, i] / (self.d[low_idx : high_idx , j] + 1e-5))
                 if 0 in self.d[low_idx : high_idx, j]:
                     print("is 0 what to expect")
                 self.c2c_sep[i, j] = 1/self.s_samples_per_class[i] * ratio
@@ -435,9 +435,7 @@ class CoSenTrainLoop(BaseLoop):
                     # calculate gradient and update cost matrix 
                     # print(self.runner.model.head.loss_module.xi)
                     self.runner.model.head.loss_module.update_xi(t.view(-1, 1))
-                    print(self.c2c_sep)
-                    print(r)
-                    print(t_temp)
+                    print('Current Cost-Matrix:')
                     print(self.runner.model.head.loss_module.xi)
 
 
