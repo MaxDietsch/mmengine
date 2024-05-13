@@ -308,7 +308,7 @@ class CoSenTrainLoop(BaseLoop):
         from mmengine.dataset.sampler import CoSenROSSampler
         if isinstance(self.dataloader.sampler, CoSenROSSampler):
             samples_per_class = self.dataloader.sampler.counts
-            print(samples_per_class)
+
         samples_per_class = torch.tensor(samples_per_class)
         self.size_dataset = samples_per_class.sum()
         h1 = samples_per_class.view(-1, 1) / self.size_dataset
@@ -361,7 +361,7 @@ class CoSenTrainLoop(BaseLoop):
                 # row l contains distance of v[i][l] to each of v[j]
                 sorted_distances = (torch.sort(torch.cdist(self.v[i], self.v[j]))[0]).to(torch.device('cpu'))
                 # decide which element to take, the smallest (inter class) or the 2nd smallest (intra class)
-                print(sorted_distances)
+                #print(sorted_distances)
                 entry_idx = 0 if i != j else 1
                 self.d[low_idx : high_idx, j] += sorted_distances[ : , entry_idx]
         
@@ -426,7 +426,7 @@ class CoSenTrainLoop(BaseLoop):
                     # print(r)
                     
                     # calculate matrix T
-                    t_temp = torch.mul(torch.exp( - (self.c2c_sep - self.mu1) ** 2 / (2 * self.s1 ** 2)), torch.exp( - (r - self.mu2) ** 2 / (2 * self.s2 ** 2)))
+                    t_temp = torch.mul(torch.exp( - (self.c2c_sep - self.mu1) ** 2 / (2 * self.s1 ** 2)), torch.exp( - (r - self.mu2) ** 2 / (2 * self.s2 ** 2))).to(torch.device('cuda'))
                     t = torch.mul(self.h, t_temp)
                     #print(t)
                     
