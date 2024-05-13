@@ -435,7 +435,7 @@ class CoSenTrainLoop(BaseLoop):
                     # calculate gradient and update cost matrix 
                     # print(self.runner.model.head.loss_module.xi)
                     self.runner.model.head.loss_module.update_xi(t.view(-1, 1))
-                    print(c2c_sep)
+                    print(self.c2c_sep)
                     print(r)
                     print(t_temp)
                     print(self.runner.model.head.loss_module.xi)
