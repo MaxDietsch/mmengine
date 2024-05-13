@@ -377,7 +377,7 @@ class CoSenTrainLoop(BaseLoop):
 
                 ratio = torch.sum(self.d[low_idx : high_idx, i] / (self.d[low_idx : high_idx , j] + 1e-5))
                 if 0 in self.d[low_idx : high_idx, j]:
-                    print("is 0 what to expect")
+                    print("There was a duplicate input in the validation of the c2c matrix but the resulting nan error was successfully avoided")
                 self.c2c_sep[i, j] = 1/self.s_samples_per_class[i] * ratio
 
         self.d.fill_(0)
