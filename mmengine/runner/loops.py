@@ -375,7 +375,7 @@ class CoSenTrainLoop(BaseLoop):
             for j in range(self.num_classes):
 
                 ratio = torch.sum(self.d[low_idx : high_idx, i] / self.d[low_idx : high_idx , j])
-                if self.d[low_idx : high_idx, j] == 0:
+                if 0 in self.d[low_idx : high_idx, j]:
                     print("is 0 what to expect")
                 self.c2c_sep[i, j] = 1/self.s_samples_per_class[i] * ratio
 
