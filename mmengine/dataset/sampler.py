@@ -304,7 +304,7 @@ class DynamicSampler(Sampler):
         self.sample_size = (1 - f1_scores) / (torch.sum(1 - f1_scores)) * self.average_sample_size
 
 
-# like above but relative over-sampling (ros)
+# like above but random over-sampling (ros)
 @DATA_SAMPLERS.register_module()
 class ROSSampler(Sampler):
     """ implements random over-sampling of minority classes
@@ -450,7 +450,159 @@ class ROSSampler(Sampler):
             epoch (int): Epoch number.
         """
         self.epoch = epoch
- 
+
+
+
+# like above but random over-sampling (ros), but the dataset size is kept the same size through all epochs
+@DATA_SAMPLERS.register_module()
+class CoSenROSSampler(Sampler):
+    """ implements random over-sampling of minority classes
+        every class, that is not as big as the biggest class is a minority class: 
+        Args:
+            ros_pct (float): ratio between sizes of upsampled minority classes to majority class
+                             any class smaller than majority class is a minority class
+            rus_maj_pct: ratio of kept elements in comparison to unkept ones of majority class
+    """
+
+    def __init__(self,
+                 dataset: Sized,
+                 ros_pct: float = 1,
+                 rus_maj_pct: float = 1, 
+                 shuffle: bool = True,
+                 seed: Optional[int] = None,
+                 round_up: bool = True) -> None:
+        rank, world_size = get_dist_info()
+        self.rank = rank
+        self.world_size = world_size
+
+        self.dataset = dataset
+        self.shuffle = shuffle
+        if seed is None:
+            seed = sync_random_seed()
+        self.seed = seed
+        self.epoch = 0
+        self.round_up = round_up
+        
+        # for ROS
+        # get the initial count of each class
+        self.num_classes = len(self.dataset.metainfo['classes'])
+        self.ros_pct = ros_pct
+        self.rus_maj_pct = rus_maj_pct
+        data_list = self.dataset.load_data_list()
+
+        self.labels = torch.tensor([item['gt_label'] for item in data_list])
+
+        self.label_counts = torch.bincount(self.labels, minlength = self.num_classes)
+        # print(f'label counts: {self.label_counts}')
+
+        # calculate how often a sample needs to be duplicated for each class
+        self.factors = torch.round(self.label_counts.max() * self.ros_pct * self.rus_maj_pct / self.label_counts, decimals = 2)
+
+        # correctly set the number of samples of the majority class
+        self.factors[torch.argmax(self.label_counts)] = 1 * self.rus_maj_pct
+        # print(f'factors: {self.factors}')
+
+        """
+        # numpy:
+        self.label_counts = np.full(self.num_classes, 0)
+        self.labels = [item['gt_label'] for item in data_list]
+        for item in data_list:
+            self.label_counts[item['gt_label']] += 1
+
+        # calculate how many samples need to be duplicated for each class
+        self.factors = np.round(max(self.label_counts) * self.ros_pct * self.rus_maj_pct / self.label_counts, 2)
+        
+        # correctly set the number of samples of the majority class
+        self.factors[np.argmax(self.label_counts)] = 1 * self.rus_maj_pct
+        """
+
+        if self.round_up:
+            self.num_samples = math.ceil(len(self.dataset) / world_size)
+            self.total_size = self.num_samples * self.world_size
+        else:
+            self.num_samples = math.ceil(
+                (len(self.dataset) - rank) / world_size)
+            self.total_size = len(self.dataset)
+
+
+        self.indices = []
+        self.counts = torch.zeros(self.num_classes, dtype=torch.int32)
+
+        for idx, label in enumerate(self.labels):
+            # Probability part of the factor
+            prob = self.factors[label] - int(self.factors[label])  
+            # Determine replications based on probability
+            replications = int(torch.ceil(self.factors[label]) if torch.rand(1) < prob else torch.floor(self.factors[label]))
+            # Add index 'replications' times
+            self.indices.extend([idx] * replications)
+            self.counts[label] += replications
+
+        #print(f'wolrd_size: {world_size}')
+        #print(f'rank: {rank}')
+        #print(f'num samples: {self.num_samples}')
+        #print(f'total size: {self.total_size}')
+
+    def __iter__(self) -> Iterator[int]:
+        """Iterate the indices."""
+
+        print(f"current distribution of samples from the dataset is : {self.counts}")
+
+        # deterministically shuffle based on epoch and seed
+        #print(f'indices before shuffle: {indices}')
+        #print(f'length of indices: {len(indices)}')
+        if self.shuffle:
+            indices2 = torch.tensor(self.indices)
+            g = torch.Generator()
+            g.manual_seed(self.seed + self.epoch)
+            indices2 = indices2[torch.randperm(indices2.size(0), generator=g)].tolist()
+
+        # numpy
+        """
+        counts = [0] * self.num_classes
+        for idx, label in enumerate(self.labels):
+            prob = self.factors[label] - int(self.factors[label])
+            replications =  int((np.ceil(self.factors[label]) if np.random.rand() < prob else np.floor(self.factors[label]))) 
+            indices += [idx] * replications
+            counts[label] += replications
+
+        # deterministically shuffle based on epoch and seed
+        if self.shuffle:
+            indices = np.array(indices)
+            np.random.seed(self.seed + self.epoch)
+            np.random.shuffle(indices)
+        """
+
+        # update num_samples and total_size for correct printed output of train process
+        self.num_samples = math.ceil((len(indices2) - self.rank) / self.world_size)
+        self.total_size = self.num_samples * self.world_size
+
+        # self.round_up would not be useful, as it would change the sample size
+
+        # subsample
+        indices2 = indices2[self.rank:self.total_size:self.world_size]
+        #print(f'indices after rank, world_size... : {indices}')
+        #print(f'new length of indices: {len(indices)}')
+        return iter(indices2)
+
+    def __len__(self) -> int:
+        """The number of samples in this rank."""
+        return self.num_samples
+
+    def set_epoch(self, epoch: int) -> None:
+        """Sets the epoch for this sampler.
+
+        When :attr:`shuffle=True`, this ensures all replicas use a different
+        random ordering for each epoch. Otherwise, the next iteration of this
+        sampler will yield the same ordering.
+
+        Args:
+            epoch (int): Epoch number.
+        """
+        self.epoch = epoch
+
+
+
+
 # like above but relative-under-sampling (rus)
 @DATA_SAMPLERS.register_module()
 class RUSSampler(Sampler):

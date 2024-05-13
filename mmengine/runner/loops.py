@@ -292,8 +292,8 @@ class CoSenTrainLoop(BaseLoop):
         self.num_classes = len(self.dataloader.dataset.metainfo['classes'])
         self.s_freq = s_freq
         self.s_samples_per_class = s_samples_per_class
-
-        # store distances
+        
+                # store distances
         self.d = torch.zeros((sum(self.s_samples_per_class), self.num_classes))
 
         # stores deep features
@@ -303,6 +303,12 @@ class CoSenTrainLoop(BaseLoop):
         self.c2c_sep = torch.zeros((self.num_classes, self.num_classes))
 
         # define H
+
+        # to work with ROS sampler (in the other implementation of ROS for each epoch there was a slightly different dataset size)
+        from mmengine.dataset.sampler import CoSenROSSampler
+        if isinstance(self.dataloader.sampler, CoSenROSSampler):
+            samples_per_class = self.dataloader.sampler.counts
+            print(samples_per_class)
         samples_per_class = torch.tensor(samples_per_class)
         self.size_dataset = samples_per_class.sum()
         h1 = samples_per_class.view(-1, 1) / self.size_dataset
